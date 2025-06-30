@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">
+  <!-- Microservice nodes -->
+  <circle cx="4" cy="4" r="2" fill="#4F46E5" opacity="0.8"/>
+  <circle cx="12" cy="4" r="2" fill="#4F46E5" opacity="0.8"/>
+  <circle cx="8" cy="12" r="2" fill="#4F46E5" opacity="0.8"/>
+  
+  <!-- Connecting lines -->
+  <path d="M5.5 5L10.5 5" stroke="#4F46E5" stroke-width="1"/>
+  <path d="M5.5 5.5L7 11" stroke="#4F46E5" stroke-width="1"/>
+  <path d="M10.5 5.5L9 11" stroke="#4F46E5" stroke-width="1"/>
+  
+  <!-- Search icon overlay -->
+  <circle cx="8" cy="8" r="2" stroke="#10B981" fill="none" stroke-width="1.5"/>
+  <path d="9.5 9.5L10.5 10.5" stroke="#10B981" stroke-width="1.5"/>
+</svg>
