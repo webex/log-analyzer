@@ -19,47 +19,50 @@ os.environ["AZURE_API_VERSION"] = "2024-12-01-preview"
 
 # litellm._turn_on_debug()
 
-# root_agent = Agent(
-#     model=LiteLlm(
-#         model="azure/gpt-4o",
-#         api_key=os.environ["AZURE_OPENAI_API_KEY"],
-#         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-#         api_version=os.environ["AZURE_API_VERSION"],
-#     ),
-#     name="opensearch_mcp_analyser_agent",
-#     instruction='''Analyse the provided JSON data and provide a clear summary:''',
-# )
+analyze_agent = Agent(
+    model=LiteLlm(
+        model="azure/gpt-4o",
+        api_key=os.environ["AZURE_OPENAI_API_KEY"],
+        api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
+        api_version=os.environ["AZURE_API_VERSION"],
+    ),
+    name="opensearch_mcp_analyser_agent",
+    instruction='''Analyze the following JSON data and provide insights about logs. 
+    Provide temporal analysis highlighting different endpoints and segregation of microservices. 
+    If any errors are present, provide its detailed analysis:
+    {search_results}''',
+)
 
-def analyze_json_file(json_file_path):
-    try:
-        with open(json_file_path, 'r') as file:
-            json_data = json.load(file)
+# def analyze_json_file(json_file_path):
+#     try:
+#         with open(json_file_path, 'r') as file:
+#             json_data = json.load(file)
         
-        # Convert JSON to string for the agent
-        json_string = json.dumps(json_data, indent=2)
+#         # Convert JSON to string for the agent
+#         json_string = json.dumps(json_data, indent=2)
         
-        # Create the prompt with the JSON data
-        prompt = f"Analyze the following JSON data and provide insights about logs. Provide temporal analysis highlighting different endpoints and segregation of microservices. If any errors are present, provide its detailed analysis:\n\n{json_string}"
+#         # Create the prompt with the JSON data
+#         prompt = f"Analyze the following JSON data and provide insights about logs. Provide temporal analysis highlighting different endpoints and segregation of microservices. If any errors are present, provide its detailed analysis:\n\n{json_string}"
         
-        # Use LiteLLM directly
-        response = litellm.completion(
-            model="azure/gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            api_key=os.environ["AZURE_OPENAI_API_KEY"],
-            api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-            api_version=os.environ["AZURE_API_VERSION"],
-        )
+#         # Use LiteLLM directly
+#         response = litellm.completion(
+#             model="azure/gpt-4o",
+#             messages=[{"role": "user", "content": prompt}],
+#             api_key=os.environ["AZURE_OPENAI_API_KEY"],
+#             api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
+#             api_version=os.environ["AZURE_API_VERSION"],
+#         )
         
-        return response.choices[0].message.content
+#         return response.choices[0].message.content
         
-    except FileNotFoundError:
-        return f"Error: File '{json_file_path}' not found."
-    except json.JSONDecodeError as e:
-        return f"Error: Invalid JSON format - {e}"
-    except Exception as e:
-        return f"Error: {e}"
+#     except FileNotFoundError:
+#         return f"Error: File '{json_file_path}' not found."
+#     except json.JSONDecodeError as e:
+#         return f"Error: Invalid JSON format - {e}"
+#     except Exception as e:
+#         return f"Error: {e}"
 
-if __name__ == "__main__":
-    result = analyze_json_file("/Users/lgoel/Documents/asdfghj/webex_js_sdk_logs.json")
-    print("Analysis Result:")
-    print(result)
+# if __name__ == "__main__":
+#     result = analyze_json_file("/Users/lgoel/Documents/asdfghj/webex_js_sdk_logs.json")
+#     print("Analysis Result:")
+#     print(result)
