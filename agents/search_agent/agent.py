@@ -19,41 +19,39 @@ search_agent = LlmAgent(
     instruction='''Query OpenSearch MCP server for logs.
     Given a webex tracking id like "webex-js-sdk_2b08d954-8cf8-460c-bf91-b9dddb1d8533_12", use the following schema to track it.
     
-  {
-    "query": {
-      "term": {
-        "fields.WEBEX_TRACKINGID.keyword": "<tracking id>"
+{
+  "query": {
+    "term": {
+      "fields.WEBEX_TRACKINGID.keyword": "webex-js-sdk_2b08d954-8cf8-460c-bf91-b9dddb1d8533_12"
     }
-    },
-    "size": 10000,
-    "sort": [
-      {
-        "@timestamp": {
-          "order": "asc"
-        }
+  },
+  "size": 10000,
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "asc"
       }
-    ]
-  }
+    }
+  ]
+}
   
   If the tracking ID includes wildcards like "webex-js-sdk_2b08d954-8cf8-460c-bf91-b9dddb1d8533_*", use the following schema:
 
-  {
-    "query": {
-      "wildcard": {
-        "fields.WEBEX_TRACKINGID.keyword": "<tracking id>"
+{
+  "query": {
+    "wildcard": {
+      "fields.WEBEX_TRACKINGID.keyword": "webex-js-sdk_2b08d954-8cf8-460c-bf91-b9dddb1d8533_*"
     }
-    },
-    "size": 10000,
-    "sort": [
-      {
-        "@timestamp": {
-          "order": "asc"
-        }
+  },
+  "size": 10000,
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "asc"
       }
-    ]
-  }
-
-
+    }
+  ]
+}
 
   The index to search is "logstash-wxm-app"
   
