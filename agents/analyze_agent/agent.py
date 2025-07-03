@@ -26,7 +26,7 @@ analyze_agent = Agent(
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],
     ),
-    name="opensearch_mcp_analyser_agent",
+    name="analyze",
     instruction='''Analyze the following JSON data and provide insights about logs. 
     Provide temporal analysis highlighting different endpoints and segregation of microservices. 
     If any errors are present, provide its detailed analysis:

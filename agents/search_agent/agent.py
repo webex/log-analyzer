@@ -29,7 +29,7 @@ search_agent = LlmAgent(
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],
     ),
-    name="opensearch_mcp_agent",
+    name="search_agent",
     output_key="search_results",
     instruction='''Query OpenSearch MCP server for logs.
     Given a webex tracking id like "webex-js-sdk_2b08d954-8cf8-460c-bf91-b9dddb1d8533_12", use the following schema to track it.
