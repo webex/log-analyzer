@@ -1,26 +1,11 @@
-# ./adk_agent_samples/mcp_agent/agent.py
-import os  # Required for path operations
+import os
 from google.adk.agents import LlmAgent
-from google.adk.agents import Agent
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools.mcp_tool.mcp_toolset import (
     MCPToolset,
     StdioServerParameters,
     StdioConnectionParams,
 )
-import litellm
-
-MODEL_GPT_4O = "azure/gpt-4o-mini"
-
-os.environ["AZURE_OPENAI_API_KEY"] = (
-    "Y2Y1YTNiYjctYzU4Ni00YWRlLWFiMjYtYjQyZmZkZWEzY2E0NmI2MWM4ZmEtMDNh_A52D_1eb65fdf-9643-417f-9974-ad72cae0e10f"
-)
-os.environ["AZURE_OPENAI_ENDPOINT"] = (
-    "https://llm-proxy.us-east-2.int.infra.intelligence.webex.com/azure/v1"
-)
-os.environ["AZURE_API_VERSION"] = "2024-12-01-preview"
-
-litellm._turn_on_debug()
 
 search_agent = LlmAgent(
     model=LiteLlm(
@@ -34,11 +19,11 @@ search_agent = LlmAgent(
     instruction='''Query OpenSearch MCP server for logs.
     Given a webex tracking id like "webex-js-sdk_2b08d954-8cf8-460c-bf91-b9dddb1d8533_12", use the following schema to track it.
     
-      {
+  {
     "query": {
       "term": {
         "fields.WEBEX_TRACKINGID.keyword": "<tracking id>"
-      }
+    }
     },
     "size": 10000,
     "sort": [
@@ -50,6 +35,26 @@ search_agent = LlmAgent(
     ]
   }
   
+  If the tracking ID includes wildcards like "webex-js-sdk_2b08d954-8cf8-460c-bf91-b9dddb1d8533_*", use the following schema:
+
+  {
+    "query": {
+      "wildcard": {
+        "fields.WEBEX_TRACKINGID.keyword": "<tracking id>"
+    }
+    },
+    "size": 10000,
+    "sort": [
+      {
+        "@timestamp": {
+          "order": "asc"
+        }
+      }
+    ]
+  }
+
+
+
   The index to search is "logstash-wxm-app"
   
   The response should be the entire JSON response from the OpenSearch server. SHOW ALL THE LOGS DONT HIDE ANYTHING.''',
