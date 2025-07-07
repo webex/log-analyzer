@@ -167,6 +167,7 @@ def initialize_client(opensearch_url: str) -> OpenSearch:
     }
 
     # 1. Try OAuth authentication
+    oauth_token = os.getenv("OPENSEARCH_OAUTH_TOKEN", "")
     oauth_name = os.getenv("OPENSEARCH_OAUTH_NAME", "")
     oauth_password = os.getenv("OPENSEARCH_OAUTH_PASSWORD", "")
     oauth_client_id = os.getenv("OPENSEARCH_OAUTH_CLIENT_ID", "")
@@ -174,6 +175,14 @@ def initialize_client(opensearch_url: str) -> OpenSearch:
     oauth_scope = os.getenv("OPENSEARCH_OAUTH_SCOPE", "")
     oauth_bearer_token_url = os.getenv("OPENSEARCH_OAUTH_BEARER_TOKEN_URL", "")
     oauth_token_url = os.getenv("OPENSEARCH_OAUTH_TOKEN_URL", "")
+
+    if oauth_token:
+        logger.info("Using provided OAuth token for authentication")
+        client_kwargs['http_auth'] = None
+        client_kwargs['headers'] = {
+            'Authorization': f'Bearer {oauth_token}'
+        }
+        return OpenSearch(**client_kwargs)
 
     if all([oauth_name, oauth_password, oauth_client_id, oauth_client_secret, oauth_scope, oauth_bearer_token_url]):
         logger.info("Attempting OAuth authentication")
