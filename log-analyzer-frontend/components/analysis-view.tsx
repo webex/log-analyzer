@@ -1,0 +1,56 @@
+"use client"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileText } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+
+interface AnalysisViewProps {
+  analysis: string
+}
+
+export function AnalysisView({ analysis }: AnalysisViewProps) {
+  if (!analysis) {
+    return <div className="text-center py-8 text-gray-500">No analysis available</div>
+  }
+
+  return (
+    <Card className="border-gray-200">
+      <CardHeader>
+        <CardTitle className="text-black flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Analysis Report
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="prose prose-sm max-w-none text-black">
+          <ReactMarkdown
+            components={{
+              h1: ({ children }) => <h1 className="text-2xl font-bold text-black mb-4">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-xl font-semibold text-black mb-3 mt-6">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-lg font-medium text-black mb-2 mt-4">{children}</h3>,
+              p: ({ children }) => <p className="text-black mb-3 leading-relaxed">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc list-inside text-black mb-3 space-y-1">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal list-inside text-black mb-3 space-y-1">{children}</ol>,
+              li: ({ children }) => <li className="text-black">{children}</li>,
+              code: ({ children }) => (
+                <code className="bg-gray-100 px-1 py-0.5 rounded text-black font-mono text-sm">{children}</code>
+              ),
+              pre: ({ children }) => (
+                <pre className="bg-gray-100 p-3 rounded text-black font-mono text-sm overflow-x-auto mb-3">
+                  {children}
+                </pre>
+              ),
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-4 border-gray-300 pl-4 text-gray-700 italic mb-3">
+                  {children}
+                </blockquote>
+              ),
+            }}
+          >
+            {analysis}
+          </ReactMarkdown>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
