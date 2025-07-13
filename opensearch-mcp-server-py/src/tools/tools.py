@@ -20,7 +20,6 @@ class GetIndexMappingArgs(BaseModel):
 class SearchIndexArgs(BaseModel):
     index: str
     query: Any
-    opensearch_url: str = os.getenv("OPENSEARCH_URL", "")
 
 
 class GetShardsArgs(BaseModel):
@@ -53,7 +52,8 @@ async def get_index_mapping_tool(args: GetIndexMappingArgs) -> list[dict]:
 
 async def search_index_tool(args: SearchIndexArgs) -> list[dict]:
     try:
-        result = search_index(args.opensearch_url, args.index, args.query)
+        opensearch_url = "https://logs-api-ci-wxm-app.o.webex.com/" if args.index == "logstash-wxm-app" else "https://logs-api-ci-wxcalling.o.webex.com/"
+        result = search_index(opensearch_url, args.index, args.query)
         formatted_result = json.dumps(result, indent=2)
 
         return [

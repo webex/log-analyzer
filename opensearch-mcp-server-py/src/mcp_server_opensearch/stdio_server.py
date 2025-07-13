@@ -14,23 +14,10 @@ from opensearch.client import initialize_client
 # --- Server setup ---
 async def serve() -> None:
     server = Server("opensearch-mcp-server")
-    opensearch_url = os.getenv("OPENSEARCH_URL", "https://localhost:9200")
 
-    # Call tool generator
-    await generate_tools_from_openapi(initialize_client(opensearch_url))
-
-    # Filter all tools by version (make this optional)
-    try:
-        version = get_opensearch_version(opensearch_url)
-        enabled_tools = get_enabled_tools(version)
-        logging.info(f"Connected OpenSearch version: {version}")
-        logging.info(f"Enabled tools: {list(enabled_tools.keys())}")
-    except Exception as e:
-        logging.warning(f"Could not get OpenSearch version (continuing without version check): {str(e)}")
-        # Fallback: enable all tools if version check fails
-        from tools.tools import TOOL_REGISTRY
-        enabled_tools = TOOL_REGISTRY
-        logging.info(f"Enabled tools (no version filtering): {list(enabled_tools.keys())}")
+    from tools.tools import TOOL_REGISTRY
+    enabled_tools = TOOL_REGISTRY
+    logging.info(f"Enabled tools (no version filtering): {list(enabled_tools.keys())}")
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
