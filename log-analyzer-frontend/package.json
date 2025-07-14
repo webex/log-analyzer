@@ -9,16 +9,20 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "lucide-react": "^0.525.0",
+    "mermaid": "^11.8.1",
+    "next": "14.0.0",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.0.0",
-    "react-markdown": "^9.0.1"
+    "react-markdown": "^9.0.1",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
-    "@types/react-dom": "^18"
+    "@types/react-dom": "^18",
+    "typescript": "^5"
   },
   "packageManager": "pnpm@10.12.4+sha512.5ea8b0deed94ed68691c9bad4c955492705c5eeb8a87ef86bc62c74a26b037b08ff9570f108b2e4dbd1dd1a9186fea925e527f141c648e85af45631074680184"
 }

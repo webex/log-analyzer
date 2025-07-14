@@ -8,6 +8,7 @@ import { SessionManager } from "@/lib/session-manager";
 export default function HomePage() {
   const [results, setResults] = useState<any>(null);
   const [analysis, setAnalysis] = useState<string>("");
+  const [mermaidCode, setMermaidCode] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [sessionManager] = useState(() => new SessionManager());
 
@@ -17,6 +18,9 @@ export default function HomePage() {
       // Ensure session exists
       await sessionManager.ensureSession();
 
+      setResults(null);
+      setAnalysis("");
+      setMermaidCode("");
       // Send query using the session manager
       const events = await sessionManager.sendQuery(searchParams);
 
@@ -33,8 +37,12 @@ export default function HomePage() {
 
       console.log("Results count:", logs?.hits?.total?.value || 0);
 
-      const analysis = events[events.length - 1]?.content?.parts?.[0]?.text;
+      const analysis = events[3]?.content?.parts?.[0]?.text;
       setAnalysis(analysis);
+
+      const mermaidCode = events[4]?.content?.parts?.[0]?.text;
+      setMermaidCode(mermaidCode);
+
 
       // Process events to extract results and analysis
       // const lastEvent = events[events.length - 1]
@@ -76,7 +84,7 @@ export default function HomePage() {
         <SearchForm onSearch={handleSearch} loading={loading} />
 
         {/* Results */}
-        {(results || analysis) && (
+        {(results || analysis || mermaidCode) && (
           <div className="mt-12">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-black mb-2">
@@ -86,7 +94,7 @@ export default function HomePage() {
                 Complete analysis results for your query
               </p>
             </div>
-            <ResultsTabs results={results} analysis={analysis} />
+            <ResultsTabs results={results} analysis={analysis} mermaidCode={mermaidCode} />
           </div>
         )}
       </div>

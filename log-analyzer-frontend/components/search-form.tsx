@@ -17,43 +17,37 @@ interface SearchFormProps {
 }
 
 const SEARCH_FIELDS = [
-  { value: "fields.WEBEX_TRACKINGID.keyword", label: "Webex Tracking ID", index: ["logstash-wxm-app", "logstash-wxcalling"] },
-  { value: "fields.mobiusCallId.keyword", label: "Mobius Call ID", index: ["logstash-wxm-app"]},
-  { value: "fields.USER_ID.keyword", label: "User ID", index: ["logstash-wxm-app"]},
-  { value: "fields.DEVICE_ID.keyword", label: "Device ID" , index: ["logstash-wxm-app"]},
-  { value: "fields.WEBEX_MEETING_ID.keyword", label: "Webex Meeting ID", index: ["logstash-wxm-app"]},
-  { value: "fields.LOCUS_ID.keyword", label: "Locus ID", index: ["logstash-wxm-app"]},
-  { value: "fields.sipCallId.keyword", label: "SIP Call ID", index: ["logstash-wxm-app", "logstash-wxcalling"]},
-  { value: "callId.keyword", label: "Call ID", index: ["logstash-wxcalling"] },
-  { value: "traceId.keyword", label: "Trace ID", index: ["logstash-wxcalling"] },
+  { value: "fields.WEBEX_TRACKINGID.keyword", label: "Webex Tracking ID" },
+  { value: "fields.mobiusCallId.keyword", label: "Mobius Call ID" },
+  { value: "fields.USER_ID.keyword", label: "User ID" },
+  { value: "fields.DEVICE_ID.keyword", label: "Device ID" },
+  { value: "fields.WEBEX_MEETING_ID.keyword", label: "Webex Meeting ID" },
+  { value: "fields.LOCUS_ID.keyword", label: "Locus ID" },
+  { value: "fields.sipCallId.keyword", label: "SIP Call ID"},
+  { value: "callId.keyword", label: "Call ID" },
+  { value: "traceId.keyword", label: "Trace ID" },
 ]
 
 
-
 const SERVICES = [
-  { value: "mobius", label: "Mobius", index: ["logstash-wxm-app"] },
-  { value: "wdm", label: "WDM", index: ["logstash-wxm-app"] },
-  { value: "locus", label: "Locus", index: ["logstash-wxm-app"] },
-  { value: "mercury", label: "Mercury", index: ["logstash-wxm-app"] },
-  { value: "sse", label: "SSE", index: ["logstash-wxcalling"] },
-  { value: "mse", label: "MSE", index: ["logstash-wxcalling"] },
+  { value: "mobius", label: "Mobius"},
+  { value: "wdm", label: "WDM" },
+  { value: "locus", label: "Locus" },
+  { value: "mercury", label: "Mercury" },
+  { value: "sse", label: "SSE" },
+  { value: "mse", label: "MSE" },
 ]
 
 const LLMS = [
   { value: "gpt-4.1", label: "GPT-4.1" },
-  { value: "gemini", label: "Gemini" },
+  // { value: "gemini", label: "Gemini" },
 ]
 
-const SEARCH_INDEXES = [
-  { value: "logstash-wxm-app", label: "Logstash WXM App" },
-  { value: "logstash-wxcalling", label: "Logstash WX Calling" },
-]
 
 export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const [searchValue, setSearchValue] = useState("")
   const [searchField, setSearchField] = useState("")
   const [llm, setLlm] = useState("gpt-4.1")
-  const [searchIndex, setSearchIndex] = useState("logstash-wxm-app")
   const [selectedServices, setSelectedServices] = useState<string[]>([])
 
   const handleServiceChange = (service: string, checked: boolean) => {
@@ -68,7 +62,6 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
     e.preventDefault()
 
     const searchParams = {
-      searchIndex,
       llm,
       searchValue,
       searchField,
@@ -89,25 +82,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Search Index Selector */}
-            <div className="space-y-2">
-              <Label htmlFor="searchIndex" className="text-black font-medium">
-                Search Index
-              </Label>
-              <Select value={searchIndex} onValueChange={setSearchIndex}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select search index" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SEARCH_INDEXES.map((index) => (
-                    <SelectItem key={index.value} value={index.value}>
-                      {index.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+            
             {/* Search Field Selector */}
             <div className="space-y-2">
               <Label htmlFor="searchField" className="text-black font-medium">
@@ -118,7 +93,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
                   <SelectValue placeholder="Select search field" />
                 </SelectTrigger>
                 <SelectContent>
-                  {SEARCH_FIELDS.filter((field) => field.index.includes(searchIndex)).map((field) => (
+                  {SEARCH_FIELDS.map((field) => (
                     <SelectItem key={field.value} value={field.value}>
                       {field.label}
                     </SelectItem>
@@ -150,12 +125,12 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
             <div className="space-y-2">
               <Label className="text-black font-medium">Services</Label>
               <div className="grid grid-cols-4 gap-3 p-2 border border-gray-300 rounded-md">
-                {SERVICES.filter((service) => service.index.includes(searchIndex)).map((service) => (
+                {SERVICES.map((service) => (
                   <div key={service.value} className="flex items-center space-x-2">
                     <Checkbox
                       id={service.value}
                       checked={selectedServices.includes(service.value)}
-                      onCheckedChange={(checked) => handleServiceChange(service.value, checked as boolean)}
+                      onCheckedChange={(checked: boolean) => handleServiceChange(service.value, checked as boolean)}
                     />
                     <Label htmlFor={service.value} className="text-sm text-black cursor-pointer">
                       {service.label}
@@ -183,7 +158,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
               <Button
                 type="submit"
                 disabled={loading || !searchField || !searchValue}
-                className="bg-black text-white hover:bg-gray-800 px-6"
+                className="bg-[#00BCEBFF] text-white hover:bg-[#00BCEB99] px-6"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">

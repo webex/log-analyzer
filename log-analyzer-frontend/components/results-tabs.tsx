@@ -7,9 +7,10 @@ import { ChartsView } from "@/components/charts-view"
 interface ResultsTabsProps {
   results: any
   analysis: string
+  mermaidCode: string
 }
 
-export function ResultsTabs({ results, analysis }: ResultsTabsProps) {
+export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps) {
   return (
     <Tabs defaultValue="analysis" className="w-full">
       <TabsList className="grid w-full grid-cols-3 bg-gray-100">
@@ -39,7 +40,7 @@ export function ResultsTabs({ results, analysis }: ResultsTabsProps) {
 
 
       <TabsContent value="charts" className="mt-6">
-        <ChartsView results={results} />
+        <ChartsView mermaidCode={mermaidCode} />
       </TabsContent>
     </Tabs>
   )

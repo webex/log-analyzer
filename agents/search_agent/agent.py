@@ -6,7 +6,7 @@ from google.adk.tools.mcp_tool.mcp_toolset import (
     StdioServerParameters,
     StdioConnectionParams,
 )
-                                
+
 search_agent = LlmAgent(
     model=LiteLlm(
         model="azure/gpt-4.1",
@@ -39,6 +39,8 @@ You can query against two possible indexes.
 *   `fields.WEBEX_TRACKINGID.keyword`
 *   `fields.mobiusCallId.keyword`
 *   `fields.sipCallId.keyword`
+*   `fields.localSessionId.keyword`
+*   `fields.remoteSessionId.keyword`
 *   `fields.USER_ID.keyword`
 *   `fields.DEVICE_ID.keyword`
 *   `fields.WEBEX_MEETING_ID.keyword`
@@ -49,10 +51,19 @@ You can query against two possible indexes.
 **B) For `logstash-wxcalling` index:**
 *   `callId.keyword`
 *   `traceId.keyword`
-*   `fields.sipCallId.keyword`
 *   `fields.WEBEX_TRACKINGID.keyword`
 *   `tags` (for service names, specifically `mse`, `sse`)
 *   `@timestamp` (for time-based filtering)
+
+Also note that there are some fields that are common to both indexes with different names:
+*   `fields.sipCallId` in `logstash-wxm-app` == callId in `logstash-wxcalling`
+*   `fields.WEBEX_TRACKINGID.keyword` in `logstash-wxm-app` == `fields.WEBEX_TRACKINGID.keyword` in `logstash-wxcalling`
+
+Consider these field equalities when constructing your queries and deciding whether to run multiple tool calls.
+If user provides a field that to common to both indexes even under different names, you must run the search tool on both indexes with the respective names.
+For example, if user provides `sipCallId: "12345@sipp-uas-666"` you must run sipCallId search on `logstash-wxm-app` and callId search on `logstash-wxcalling`.
+
+Another caveat is if user provides a session Id, run the search for both `localSessionId` and `remoteSessionId` in `logstash-wxm-app` with an or condition according to query rules below. 
 
 **6. Query Construction Logic:**
 
@@ -73,6 +84,10 @@ You must construct queries using OpenSearch's Query DSL, leveraging `term`, `wil
   }
 }
 ```
+
+It is your job to figure out which index to use based on the fields and tags present in the user request. 
+If the fields passed can be searched in both indexes, search in both indexes.
+MAKE MULTIPLE CALLS TO THE TOOL FOR EACH INDEX.
 
 *   **Exact Match (Term Query):**
     Use a `term` query for exact matches on specific IDs.
@@ -203,7 +218,7 @@ You must construct queries using OpenSearch's Query DSL, leveraging `term`, `wil
         ```
 
 **7. Consistency and Behavior:**
-*   **Index Selection:** Accurately determine the target index (`logstash-wxm-app` or `logstash-wxcalling`) based on the unique fields (`callId`, `traceId`, `mse`, `sse`) in the user request. Default to `logstash-wxm-app` if no unique fields are present.
+*   **Index Selection:** Accurately determine the target index (`logstash-wxm-app` or `logstash-wxcalling`) based on the unique fields (`callId`, `traceId`, `mse`, `sse`) in the user request. Run search tool on both indexes if necessary.
 *   **Field Naming:** Always adhere to the specified field names (including the `.keyword` suffix).
 *   **Tag Queries:** Always use a `wildcard` for the `tags` field. If multiple service names are provided, always wrap them in a `bool` `should` clause.
 *   **Query Logic:** Prioritize `term` for exact ID matches and `wildcard` for pattern ID matches. Combine all conditions using a top-level `bool` `must` query.

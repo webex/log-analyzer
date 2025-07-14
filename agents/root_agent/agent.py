@@ -12,12 +12,13 @@ os.environ["AZURE_API_VERSION"] = "2024-10-21"
 
 from analyze_agent.agent import analyze_agent
 from search_agent.agent import search_agent
+from visualAgent.agent import sequence_diagram_agent
 
 opik_tracer = OpikTracer()
 
 root_agent = SequentialAgent(
     name="MicorserviceLogAnalyzerAgent",
-    sub_agents=[search_agent, analyze_agent],
+    sub_agents=[search_agent, analyze_agent, sequence_diagram_agent],
     description="Executes a sequence of log searching and analysis agents.",
 )
 
