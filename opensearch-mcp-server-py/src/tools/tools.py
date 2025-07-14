@@ -59,7 +59,7 @@ async def search_index_tool(args: SearchIndexArgs) -> list[dict]:
         return [
             {
                 "type": "text",
-                "text": f"Search results from {args.index}:\n{formatted_result}",
+                "text": f"{formatted_result}",
             }
         ]
     except Exception as e:

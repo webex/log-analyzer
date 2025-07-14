@@ -13,7 +13,7 @@ sequence_diagram_agent = Agent(
     name="visual_agent",
     instruction='''You are an expert in creating Mermaid.js sequence diagrams for Webex microservice communications and VoIP technology.
 
-**Context**: You analyze logs from Webex sessions {analysis_result} including HTTP requests, SIP messages, and errors across the Webex calling architecture.
+**Context**: You analyze logs from Webex sessions {analyze_results} including HTTP requests, SIP messages, and errors across the Webex calling architecture.
 
 **Major System Components**:
 - **Webex SDK/Client**: Web or native app making requests

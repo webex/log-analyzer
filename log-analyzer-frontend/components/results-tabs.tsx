@@ -32,7 +32,7 @@ export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps
 
       <TabsContent value="logs" className="mt-6">
         <div className="space-y-4 max-h-[600px] overflow-y-auto">
-          {results?.hits?.hits?.map((hit: any, index: number) => (
+          {results?.map((hit: any, index: number) => (
             <LogCard key={hit._id || index} log={hit} />
           ))}
         </div>

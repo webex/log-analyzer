@@ -26,6 +26,7 @@ const SEARCH_FIELDS = [
   { value: "fields.sipCallId.keyword", label: "SIP Call ID"},
   { value: "callId.keyword", label: "Call ID" },
   { value: "traceId.keyword", label: "Trace ID" },
+  { value: "sessionId", label: "Session ID" },
 ]
 
 

@@ -44,7 +44,7 @@ analyze_agent = LlmAgent(
             **Contact Center Flow**: Browser → Mobius → SSE → Kamailio → Destination
             Media: Browser ↔ MSE ↔ Destination
             
-        Analyze the following logs and provide detailed insights:\n{json_string} 
+        Analyze the following logs and provide detailed insights:\n{search_results} 
         Your analysis should cover these key points:
         1. **Complete http request/response communication**
             - capture details like timestamps, origin endpoint and destination endpoint, payload and relevant headers

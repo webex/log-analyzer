@@ -26,16 +26,13 @@ export default function HomePage() {
 
       console.log("Search events received:", events);
 
-      const logs = JSON.parse(
-        events[1]?.content?.parts?.[0]?.functionResponse.response.result.content[0].text.slice(
-          `Search results from ${searchParams.searchIndex}:\n`.length
-        )
-      );
+      const logs = events[1]?.content?.parts?.flatMap((part: any) => JSON.parse(part.functionResponse?.response?.result?.content?.[0]?.text).hits.hits)
+    
       setResults(logs);
 
       console.log("Search results:", logs);
 
-      console.log("Results count:", logs?.hits?.total?.value || 0);
+      console.log("Results count:", logs?.length);
 
       const analysis = events[3]?.content?.parts?.[0]?.text;
       setAnalysis(analysis);

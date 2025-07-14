@@ -171,7 +171,6 @@ class TestTools():
         # Assert
         assert len(result) == 1
         assert result[0]['type'] == 'text'
-        assert 'Search results from test-index' in result[0]['text']
         assert json.loads(result[0]['text'].split('\n', 1)[1]) == mock_results
         self.mock_search.assert_called_once_with(self.test_url, "test-index", {"match_all": {}})
     
