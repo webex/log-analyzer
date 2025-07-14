@@ -24,7 +24,7 @@ export default function HomePage() {
 
       const logs = JSON.parse(
         events[1]?.content?.parts?.[0]?.functionResponse.response.result.content[0].text.slice(
-          "Search results from logstash-wxm-app:\n".length
+          `Search results from ${searchParams.searchIndex}:\n`.length
         )
       );
       setResults(logs);

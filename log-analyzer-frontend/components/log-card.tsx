@@ -74,7 +74,7 @@ export function LogCard({ log }: LogCardProps) {
 
           {source.tags && (
             <div className="flex flex-wrap gap-1">
-              {source.tags.map((tag: string, index: number) => (
+              {[...(Array.isArray(source.tags) ? source.tags : [source.tags])].map((tag: string, index: number) => (
                 <Badge key={index} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>

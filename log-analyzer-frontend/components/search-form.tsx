@@ -17,25 +17,43 @@ interface SearchFormProps {
 }
 
 const SEARCH_FIELDS = [
-  { value: "fields.WEBEX_TRACKINGID.keyword", label: "Webex Tracking ID" },
-  { value: "fields.mobiusCallId.keyword", label: "Mobius Call ID" },
-  { value: "fields.USER_ID.keyword", label: "User ID" },
-  { value: "fields.DEVICE_ID.keyword", label: "Device ID" },
-  { value: "fields.WEBEX_MEETING_ID.keyword", label: "Webex Meeting ID" },
-  { value: "fields.LOCUS_ID.keyword", label: "Locus ID" },
-  { value: "fields.sipCallId.keyword", label: "SIP Call ID" },
+  { value: "fields.WEBEX_TRACKINGID.keyword", label: "Webex Tracking ID", index: ["logstash-wxm-app", "logstash-wxcalling"] },
+  { value: "fields.mobiusCallId.keyword", label: "Mobius Call ID", index: ["logstash-wxm-app"]},
+  { value: "fields.USER_ID.keyword", label: "User ID", index: ["logstash-wxm-app"]},
+  { value: "fields.DEVICE_ID.keyword", label: "Device ID" , index: ["logstash-wxm-app"]},
+  { value: "fields.WEBEX_MEETING_ID.keyword", label: "Webex Meeting ID", index: ["logstash-wxm-app"]},
+  { value: "fields.LOCUS_ID.keyword", label: "Locus ID", index: ["logstash-wxm-app"]},
+  { value: "fields.sipCallId.keyword", label: "SIP Call ID", index: ["logstash-wxm-app", "logstash-wxcalling"]},
+  { value: "callId.keyword", label: "Call ID", index: ["logstash-wxcalling"] },
+  { value: "traceId.keyword", label: "Trace ID", index: ["logstash-wxcalling"] },
 ]
 
+
+
 const SERVICES = [
-  { value: "mobius", label: "Mobius" },
-  { value: "wdm", label: "WDM" },
-  { value: "locus", label: "Locus" },
-  { value: "mercury", label: "Mercury" },
+  { value: "mobius", label: "Mobius", index: ["logstash-wxm-app"] },
+  { value: "wdm", label: "WDM", index: ["logstash-wxm-app"] },
+  { value: "locus", label: "Locus", index: ["logstash-wxm-app"] },
+  { value: "mercury", label: "Mercury", index: ["logstash-wxm-app"] },
+  { value: "sse", label: "SSE", index: ["logstash-wxcalling"] },
+  { value: "mse", label: "MSE", index: ["logstash-wxcalling"] },
+]
+
+const LLMS = [
+  { value: "gpt-4.1", label: "GPT-4.1" },
+  { value: "gemini", label: "Gemini" },
+]
+
+const SEARCH_INDEXES = [
+  { value: "logstash-wxm-app", label: "Logstash WXM App" },
+  { value: "logstash-wxcalling", label: "Logstash WX Calling" },
 ]
 
 export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const [searchValue, setSearchValue] = useState("")
   const [searchField, setSearchField] = useState("")
+  const [llm, setLlm] = useState("gpt-4.1")
+  const [searchIndex, setSearchIndex] = useState("logstash-wxm-app")
   const [selectedServices, setSelectedServices] = useState<string[]>([])
 
   const handleServiceChange = (service: string, checked: boolean) => {
@@ -50,6 +68,8 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
     e.preventDefault()
 
     const searchParams = {
+      searchIndex,
+      llm,
       searchValue,
       searchField,
       services: selectedServices,
@@ -65,11 +85,29 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
           <Search className="h-5 w-5" />
           Start Analysis
         </CardTitle>
-        <p className="text-gray-600 text-sm">Enter a tracking ID to begin the multi-agent log analysis process</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Search Index Selector */}
+            <div className="space-y-2">
+              <Label htmlFor="searchIndex" className="text-black font-medium">
+                Search Index
+              </Label>
+              <Select value={searchIndex} onValueChange={setSearchIndex}>
+                <SelectTrigger className="border-gray-300">
+                  <SelectValue placeholder="Select search index" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SEARCH_INDEXES.map((index) => (
+                    <SelectItem key={index.value} value={index.value}>
+                      {index.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Search Field Selector */}
             <div className="space-y-2">
               <Label htmlFor="searchField" className="text-black font-medium">
@@ -80,7 +118,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
                   <SelectValue placeholder="Select search field" />
                 </SelectTrigger>
                 <SelectContent>
-                  {SEARCH_FIELDS.map((field) => (
+                  {SEARCH_FIELDS.filter((field) => field.index.includes(searchIndex)).map((field) => (
                     <SelectItem key={field.value} value={field.value}>
                       {field.label}
                     </SelectItem>
@@ -89,11 +127,30 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
               </Select>
             </div>
 
+            {/* LLM Selector */}
+            <div className="space-y-2">
+              <Label htmlFor="llm" className="text-black font-medium">
+                LLM
+              </Label>
+              <Select value={llm} onValueChange={setLlm}>
+                <SelectTrigger className="border-gray-300">
+                  <SelectValue placeholder="Select LLM" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LLMS.map((llmOption) => (
+                    <SelectItem key={llmOption.value} value={llmOption.value}>
+                      {llmOption.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             {/* Services Selector */}
             <div className="space-y-2">
               <Label className="text-black font-medium">Services</Label>
-              <div className="grid grid-cols-2 gap-3 p-3 border border-gray-300 rounded-md">
-                {SERVICES.map((service) => (
+              <div className="grid grid-cols-4 gap-3 p-2 border border-gray-300 rounded-md">
+                {SERVICES.filter((service) => service.index.includes(searchIndex)).map((service) => (
                   <div key={service.value} className="flex items-center space-x-2">
                     <Checkbox
                       id={service.value}
