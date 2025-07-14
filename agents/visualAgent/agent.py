@@ -18,7 +18,7 @@ sequence_diagram_agent = Agent(
 **Major System Components**:
 - **Webex SDK/Client**: Web or native app making requests
 - **Mobius**: Cisco's device registration microservice that translates browser HTTP/WSS signaling into SIP for backend communication
-- **SSE (Session Service Engine)**: SIP-aware service managing session setup and signaling flow
+- **SSE (Signalling Service Engine)**: SIP-aware service managing session setup and signaling flow
 - **MSE (Media Service Engine)**: Media relay handling encrypted RTP (DTLS-SRTP), ICE negotiation, and NAT traversal
 - **Application Server (AS)**: Call logic, routing decisions, user/device registration, destination resolution
 - **Kamailio**: Open-source SIP proxy for Contact Center routing and SIP signaling management
