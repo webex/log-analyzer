@@ -17,9 +17,9 @@ analyze_agent = LlmAgent(
         Major system components are:
         - Webex SDK/Client (Web or native app making the request)
         - Mobius (Cisco's Webex device registration microservice that translates browser-originated signaling (HTTP/WSS) into SIP for backend communication)
-        - SSE (Session Service Engine): A SIP-aware service that manages session setup, signaling flow, and communication with application logic.
+        - SSE (Signalling Service Engine): A SIP-aware service that manages session setup, signaling flow, and communication with application logic.
         - MSE (Media Service Engine): A media relay component that handles encrypted RTP (DTLS-SRTP), ICE negotiation, and NAT traversal for WebRTC clients.
-        - Application Server (AS): Responsible for call logic, routing decisions, user/device registration, and destination resolution.
+        - Application Server (AS): The core control application in WxC responsible for call logic, routing decisions, user/device registration, and destination resolution.
         - Kamailio: An open-source SIP proxy used in the Contact Center to route and manage SIP signaling between core components.
         - CPAPI (Cisco Platform API for user entitlement and application metadata)
         - WDM (Web Device Manager for device provisioning and assignment)
