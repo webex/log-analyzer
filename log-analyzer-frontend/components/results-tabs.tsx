@@ -1,8 +1,8 @@
 "use client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LogCard } from "@/components/log-card"
 import { AnalysisView } from "@/components/analysis-view"
 import { ChartsView } from "@/components/charts-view"
+import { LogsView } from "@/components/logs-view"
 
 interface ResultsTabsProps {
   results: any
@@ -31,11 +31,7 @@ export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps
       </TabsContent>
 
       <TabsContent value="logs" className="mt-6">
-        <div className="space-y-4 max-h-[600px] overflow-y-auto">
-          {results?.map((hit: any, index: number) => (
-            <LogCard key={hit._id || index} log={hit} />
-          ))}
-        </div>
+        <LogsView results={results} />
       </TabsContent>
 
 

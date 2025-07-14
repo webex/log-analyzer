@@ -81,7 +81,7 @@ export default function HomePage() {
         <SearchForm onSearch={handleSearch} loading={loading} />
 
         {/* Results */}
-        {(results || analysis || mermaidCode) && (
+        {results && analysis && mermaidCode && results.length > 0 && (
           <div className="mt-12">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-black mb-2">
@@ -92,6 +92,12 @@ export default function HomePage() {
               </p>
             </div>
             <ResultsTabs results={results} analysis={analysis} mermaidCode={mermaidCode} />
+          </div>
+        )}
+
+        {results && results.length === 0 && (
+          <div className="mt-12 text-center text-gray-500">
+            No results found for your query :(
           </div>
         )}
       </div>

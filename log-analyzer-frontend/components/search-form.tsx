@@ -27,8 +27,20 @@ const SEARCH_FIELDS = [
   { value: "callId.keyword", label: "Call ID" },
   { value: "traceId.keyword", label: "Trace ID" },
   { value: "sessionId", label: "Session ID" },
+  { value: "message", label: "Message" }
 ]
 
+const TIME_FILTERS = [
+  { value: "none", label: "None" },
+  { value: "last-15-minutes", label: "Last 15 minutes" },
+  { value: "last-30-minutes", label: "Last 30 minutes" },
+  { value: "last-1-hour", label: "Last 1 hour" },
+  { value: "last-12-hours", label: "Last 12 hours" },
+  { value: "last-24-hours", label: "Last 24 hours" },
+  { value: "last-3-days", label: "Last 3 days" },
+  { value: "last-7-days", label: "Last 7 days" },
+  { value: "last-15-days", label: "Last 15 days" }
+]
 
 const SERVICES = [
   { value: "mobius", label: "Mobius"},
@@ -48,6 +60,7 @@ const LLMS = [
 export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const [searchValue, setSearchValue] = useState("")
   const [searchField, setSearchField] = useState("")
+  const [timeFilter, setTimeFilter] = useState("")
   const [llm, setLlm] = useState("gpt-4.1")
   const [selectedServices, setSelectedServices] = useState<string[]>([])
 
@@ -62,11 +75,12 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    const searchParams = {
+    let searchParams = {
       llm,
       searchValue,
       searchField,
       services: selectedServices,
+      timeFilter
     }
 
     onSearch(searchParams)
@@ -116,6 +130,25 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
                   {LLMS.map((llmOption) => (
                     <SelectItem key={llmOption.value} value={llmOption.value}>
                       {llmOption.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Time Filter Selector */}
+            <div className="space-y-2">
+              <Label htmlFor="timeFilter" className="text-black font-medium">
+                Time Filter
+              </Label>
+              <Select value={timeFilter} onValueChange={setTimeFilter}>
+                <SelectTrigger className="border-gray-300">
+                  <SelectValue placeholder="Select time filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_FILTERS.map((filter) => (
+                    <SelectItem key={filter.value} value={filter.value}>
+                      {filter.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

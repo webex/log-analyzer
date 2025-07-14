@@ -47,6 +47,7 @@ You can query against two possible indexes.
 *   `fields.LOCUS_ID.keyword`
 *   `tags` (for service names like `mobius`, `wdm`, `locus`, `mercury`, etc.)
 *   `@timestamp` (for time-based filtering)
+*   message
 
 **B) For `logstash-wxcalling` index:**
 *   `callId.keyword`
@@ -54,6 +55,7 @@ You can query against two possible indexes.
 *   `fields.WEBEX_TRACKINGID.keyword`
 *   `tags` (for service names, specifically `mse`, `sse`)
 *   `@timestamp` (for time-based filtering)
+*   message
 
 Also note that there are some fields that are common to both indexes with different names:
 *   `fields.sipCallId` in `logstash-wxm-app` == callId in `logstash-wxcalling`
@@ -216,6 +218,20 @@ MAKE MULTIPLE CALLS TO THE TOOL FOR EACH INDEX.
           }
         }
         ```
+*   **Message Field:**
+    Message field search should be done using a `wildcard` query as follows and always performed on both indexes unless the services selected are specific to one index.:
+    {
+      "index": "logstash-wxcalling",
+      "query": {
+        "query": {
+          "wildcard": {
+            "message": "cf1992db00804fbb84cd61fe4a2b5c1c"
+          }
+        },
+        "size": 10000,
+        "sort": [ { "@timestamp": { "order": "asc" } } ]
+      }
+    }
 
 **7. Consistency and Behavior:**
 *   **Index Selection:** Accurately determine the target index (`logstash-wxm-app` or `logstash-wxcalling`) based on the unique fields (`callId`, `traceId`, `mse`, `sse`) in the user request. Run search tool on both indexes if necessary.
