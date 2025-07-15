@@ -74,8 +74,8 @@ analyze_agent = LlmAgent(
         List interactions in bullet format:
         /n
         - **[Timestamp]**: `METHOD` request from [microservice endpoint] [`SOURCE_IP`] to [microservice endpoint] [`DEST_IP`]
-        → Payload or Status (print concise information)
-        → Outcome: e.g. Successful feature retrieval, Call on hold, Call resumed, etc.
+        → **Payload or Status** (print concise information)
+        → **Outcome**: e.g. Successful feature retrieval, Call on hold, Call resumed, etc.
         Dont print headers information
 
         ---
@@ -83,18 +83,18 @@ analyze_agent = LlmAgent(
         List SIP message flow like:
         /n
         - **[Timestamp]**: `INVITE` from [microservice endpoint] [`SOURCE_IP`] to [microservice endpoint] [`DEST_IP`]  
-        → Media: SDP details if available 
-        → Call ID and Status: `200 OK`, etc.  
-        → Outcome: e.g. "Call established", "Call rejected", etc.
+        → **Media**: SDP details if available 
+        → **Call ID and Status**: `200 OK`, etc.  
+        → **Outcome**: e.g. "Call established", "Call rejected", etc.
 
         ---
         ### ❗ Root Cause Analysis
         (Give as much details as possible, use proper formatting given below)
         → **[Timestamp]**: `ErrorType (ErrorCode)`  
-        → Description: What went wrong  
-        → Potential Root Causes 
-        → Suggested Fix: Clear steps to resolve  
-        → Notes: Mention any documentation reference or escalation if needed
+        → **Description**: What went wrong  
+        → **Potential Root Causes** 
+        → **Suggested Fix**: Clear steps to resolve  
+        → **Notes**: Mention any documentation reference or escalation if needed
 
         ---
         ###Conclusion (Provide concise summary of analysis)
