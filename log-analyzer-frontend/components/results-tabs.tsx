@@ -12,7 +12,8 @@ interface ResultsTabsProps {
 
 export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps) {
   return (
-    <Tabs defaultValue="analysis" className="w-full">
+    <div className="w-full h-full overflow-hidden">
+      <Tabs defaultValue="analysis" className="h-full">
       <TabsList className="grid w-full grid-cols-3 bg-gray-100">
           <TabsTrigger value="analysis" className="text-black data-[state=active]:bg-white">
           Analysis
@@ -26,18 +27,20 @@ export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps
           Charts
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="analysis" className="mt-6">
+      <TabsContent value="analysis" className="h-full overflow-y-auto">
         <AnalysisView analysis={analysis} />
       </TabsContent>
 
-      <TabsContent value="logs" className="mt-6">
+      <TabsContent value="logs" className="h-full overflow-y-auto">
         <LogsView results={results} />
       </TabsContent>
 
 
-      <TabsContent value="charts" className="mt-6">
+      <TabsContent value="charts" className="h-full overflow-y-auto">
         <ChartsView mermaidCode={mermaidCode} />
       </TabsContent>
     </Tabs>
+    </div>
+    
   )
 }

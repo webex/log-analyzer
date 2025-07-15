@@ -1,19 +1,25 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, Play } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search, Play, Bot } from "lucide-react";
 
 interface SearchFormProps {
-  onSearch: (params: any) => void
-  loading: boolean
+  onSearch: (params: any) => void;
+  loading: boolean;
 }
 
 const SEARCH_FIELDS = [
@@ -23,12 +29,12 @@ const SEARCH_FIELDS = [
   { value: "fields.DEVICE_ID.keyword", label: "Device ID" },
   { value: "fields.WEBEX_MEETING_ID.keyword", label: "Webex Meeting ID" },
   { value: "fields.LOCUS_ID.keyword", label: "Locus ID" },
-  { value: "fields.sipCallId.keyword", label: "SIP Call ID"},
+  { value: "fields.sipCallId.keyword", label: "SIP Call ID" },
   { value: "callId.keyword", label: "Call ID" },
   { value: "traceId.keyword", label: "Trace ID" },
   { value: "sessionId", label: "Session ID" },
-  { value: "message", label: "Message" }
-]
+  { value: "message", label: "Message" },
+];
 
 const TIME_FILTERS = [
   { value: "none", label: "None" },
@@ -39,65 +45,64 @@ const TIME_FILTERS = [
   { value: "last-24-hours", label: "Last 24 hours" },
   { value: "last-3-days", label: "Last 3 days" },
   { value: "last-7-days", label: "Last 7 days" },
-  { value: "last-15-days", label: "Last 15 days" }
-]
+  { value: "last-15-days", label: "Last 15 days" },
+];
 
 const SERVICES = [
-  { value: "mobius", label: "Mobius"},
+  { value: "mobius", label: "Mobius" },
   { value: "wdm", label: "WDM" },
   { value: "locus", label: "Locus" },
   { value: "mercury", label: "Mercury" },
   { value: "sse", label: "SSE" },
   { value: "mse", label: "MSE" },
-]
+  { value: "kamailio", label: "Kamailio"}
+];
 
 const LLMS = [
   { value: "gpt-4.1", label: "GPT-4.1" },
   // { value: "gemini", label: "Gemini" },
-]
-
+];
 
 export function SearchForm({ onSearch, loading }: SearchFormProps) {
-  const [searchValue, setSearchValue] = useState("")
-  const [searchField, setSearchField] = useState("")
-  const [timeFilter, setTimeFilter] = useState("")
-  const [llm, setLlm] = useState("gpt-4.1")
-  const [selectedServices, setSelectedServices] = useState<string[]>([])
+  const [searchValue, setSearchValue] = useState("");
+  const [searchField, setSearchField] = useState("");
+  const [timeFilter, setTimeFilter] = useState("");
+  const [llm, setLlm] = useState("gpt-4.1");
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
   const handleServiceChange = (service: string, checked: boolean) => {
     if (checked) {
-      setSelectedServices((prev) => [...prev, service])
+      setSelectedServices((prev) => [...prev, service]);
     } else {
-      setSelectedServices((prev) => prev.filter((s) => s !== service))
+      setSelectedServices((prev) => prev.filter((s) => s !== service));
     }
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     let searchParams = {
       llm,
       searchValue,
       searchField,
       services: selectedServices,
-      timeFilter
-    }
+      timeFilter,
+    };
 
-    onSearch(searchParams)
-  }
+    onSearch(searchParams);
+  };
 
   return (
-    <Card className="border-gray-200">
+    <Card className="border-gray-200 min-h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-black">
-          <Search className="h-5 w-5" />
-          Start Analysis
+          <Bot className="h-6 w-6" />
+          LogAnalyzer
         </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            
+          <div className="flex flex-col gap-4">
             {/* Search Field Selector */}
             <div className="space-y-2">
               <Label htmlFor="searchField" className="text-black font-medium">
@@ -154,19 +159,27 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {/* Services Selector */}
             <div className="space-y-2">
               <Label className="text-black font-medium">Services</Label>
-              <div className="grid grid-cols-4 gap-3 p-2 border border-gray-300 rounded-md">
+              <div className="grid grid-cols-2 gap-3 p-2 border border-gray-300 rounded-md">
                 {SERVICES.map((service) => (
-                  <div key={service.value} className="flex items-center space-x-2">
+                  <div
+                    key={service.value}
+                    className="flex items-center space-x-2"
+                  >
                     <Checkbox
                       id={service.value}
                       checked={selectedServices.includes(service.value)}
-                      onCheckedChange={(checked: boolean) => handleServiceChange(service.value, checked as boolean)}
+                      onCheckedChange={(checked: boolean) =>
+                        handleServiceChange(service.value, checked as boolean)
+                      }
                     />
-                    <Label htmlFor={service.value} className="text-sm text-black cursor-pointer">
+                    <Label
+                      htmlFor={service.value}
+                      className="text-sm text-black cursor-pointer"
+                    >
                       {service.label}
                     </Label>
                   </div>
@@ -180,36 +193,34 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
             <Label htmlFor="searchValue" className="text-black font-medium">
               Search Value
             </Label>
-            <div className="flex gap-3">
-              <Input
-                id="searchValue"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder="Enter tracking ID or search value..."
-                className="border-gray-300"
-                required
-              />
-              <Button
-                type="submit"
-                disabled={loading || !searchField || !searchValue}
-                className="bg-[#00BCEBFF] text-white hover:bg-[#00BCEB99] px-6"
-              >
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Analyzing...
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Play className="h-4 w-4" />
-                    Start Analysis
-                  </div>
-                )}
-              </Button>
-            </div>
+            <Input
+              id="searchValue"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder="Enter tracking ID or search value..."
+              className="border-gray-300"
+              required
+            />
+            <Button
+              type="submit"
+              disabled={loading || !searchField || !searchValue}
+              className="bg-[#00BCEBFF] text-white hover:bg-[#00BCEB99] px-6 w-full"
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Analyzing...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Play className="h-4 w-4" />
+                  Start Analysis
+                </div>
+              )}
+            </Button>
           </div>
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -3,7 +3,7 @@ from google.adk.agents import SequentialAgent
 from opik.integrations.adk import OpikTracer, track_adk_agent_recursive
 
 os.environ["AZURE_OPENAI_API_KEY"] = (
-    "YjE3NWMzZjMtYzBiOC00ODYzLWI1ZWMtYmQ3YjBkMjE1ZTAwYzVjNjE0Y2UtNjc5_A52D_1eb65fdf-9643-417f-9974-ad72cae0e10f"
+    "NGI5NzhjNDEtN2IzNS00YjdhLTlkMGItYTYwMDRkMzlkM2NiOTFhMzQyY2MtMGYx_A52D_1eb65fdf-9643-417f-9974-ad72cae0e10f"
 )
 os.environ["AZURE_OPENAI_ENDPOINT"] = (
     "https://llm-proxy.us-east-2.int.infra.intelligence.webex.com/azure/v1"

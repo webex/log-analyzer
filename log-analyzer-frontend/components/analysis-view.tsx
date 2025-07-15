@@ -14,15 +14,8 @@ export function AnalysisView({ analysis }: AnalysisViewProps) {
   }
 
   return (
-    <Card className="border-gray-200">
-      <CardHeader>
-        <CardTitle className="text-black flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Analysis Report
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="prose prose-sm max-w-none text-black">
+
+        <div className="prose prose-sm max-w-none text-black h-full p-4">
           <ReactMarkdown
             components={{
               h1: ({ children }) => <h1 className="text-2xl font-bold text-black mb-4">{children}</h1>,
@@ -50,7 +43,6 @@ export function AnalysisView({ analysis }: AnalysisViewProps) {
             {analysis}
           </ReactMarkdown>
         </div>
-      </CardContent>
-    </Card>
+
   )
 }
