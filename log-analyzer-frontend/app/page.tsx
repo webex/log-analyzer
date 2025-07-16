@@ -29,9 +29,16 @@ export default function HomePage() {
 
       const logs = events[1]?.content?.parts?.flatMap(
         (part: any) =>
-          JSON.parse(
+          {
+            try {
+              return JSON.parse(
             part.functionResponse?.response?.result?.content?.[0]?.text
-          ).hits.hits
+          ).hits.hits;
+            } catch (error) {
+              console.error("Failed to parse log entry:", error);
+              return [];
+            }
+          }
       );
 
       setResults(logs);

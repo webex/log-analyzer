@@ -33,7 +33,7 @@ const SEARCH_FIELDS = [
   { value: "callId.keyword", label: "Call ID" },
   { value: "traceId.keyword", label: "Trace ID" },
   { value: "sessionId", label: "Session ID" },
-  { value: "message", label: "Message" },
+  { value: "message", label: "Global" },
 ];
 
 const TIME_FILTERS = [
@@ -83,7 +83,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
 
     let searchParams = {
       llm,
-      searchValue,
+      searchValue: searchValue.trim(),
       searchField,
       services: selectedServices,
       timeFilter,

@@ -123,12 +123,14 @@ oauth_token_url = os.getenv("OPENSEARCH_OAUTH_TOKEN_URL", "")
 
 logger.info("Attempting OAuth authentication")
 
-bearer_token = _get_bearer_token(oauth_name, oauth_password, oauth_bearer_token_url)
-if bearer_token:
-    access_token = _get_oauth_access_token(bearer_token, oauth_client_id, oauth_client_secret, oauth_scope, oauth_token_url)
-    if access_token:
-        os.environ["OPENSEARCH_OAUTH_TOKEN"] = access_token
-        logger.info("OAuth authentication successful")
+def get_opensearch_oauth_token():
+    bearer_token = _get_bearer_token(oauth_name, oauth_password, oauth_bearer_token_url)
+    if bearer_token:
+        access_token = _get_oauth_access_token(bearer_token, oauth_client_id, oauth_client_secret, oauth_scope, oauth_token_url)
+        if access_token:
+            os.environ["OPENSEARCH_OAUTH_TOKEN"] = access_token
+            logger.info("OAuth authentication successful")
 
+get_opensearch_oauth_token()
 logger.info("Starting MCP server...")
 main()

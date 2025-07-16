@@ -35,7 +35,7 @@ Generate a JSON query object to retrieve logs from the OpenSearch MCP server.
 
 You can query against two possible indexes.
 
-**A) For `logstash-wxm-app` index:**
+**A) For `logstash-wxm-app` and `logstash-wxm-app-eu1` index:**
 *   `fields.WEBEX_TRACKINGID.keyword`
 *   `fields.mobiusCallId.keyword`
 *   `fields.sipCallId.keyword`
@@ -49,13 +49,19 @@ You can query against two possible indexes.
 *   `@timestamp` (for time-based filtering)
 *   message
 
-**B) For `logstash-wxcalling` index:**
+**B) For `logstash-wxcalling` and `logstash-wxcalling-euc1` index:**
 *   `callId.keyword`
 *   `traceId.keyword`
 *   `fields.WEBEX_TRACKINGID.keyword`
 *   `tags` (for service names, specifically `mse`, `sse`)
 *   `@timestamp` (for time-based filtering)
 *   message
+
+**C) For `logstash-wbx2-access` index:**
+* `_source.trackingid` for fields ids like CLIENT_5e7b00ca-0270-4f6a-b598-d6fe3066bb93
+
+Henceforth, `logstash-wxm-app` implies run it on both `logstash-wxm-app` and `logstash-wxm-app-eu1` indexes, and `logstash-wxcalling` implies run it on both `logstash-wxcalling` and `logstash-wxcalling-euc1` indexes.
+MAKE SURE TO REMEMBER THIS. YOU RUN IT SEPARATELY ON THE 4 INDEXES IN 4 SEPARATE FUNCTION CALLS.
 
 Also note that there are some fields that are common to both indexes with different names:
 *   `fields.sipCallId` in `logstash-wxm-app` == callId in `logstash-wxcalling`
@@ -232,6 +238,8 @@ MAKE MULTIPLE CALLS TO THE TOOL FOR EACH INDEX.
         "sort": [ { "@timestamp": { "order": "asc" } } ]
       }
     }
+
+    Include a wildcard search in the `message` field as or filter for all four indexes for all the searches that come in regardless of the field and index.
 
 **7. Consistency and Behavior:**
 *   **Index Selection:** Accurately determine the target index (`logstash-wxm-app` or `logstash-wxcalling`) based on the unique fields (`callId`, `traceId`, `mse`, `sse`) in the user request. Run search tool on both indexes if necessary.

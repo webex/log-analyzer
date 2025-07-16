@@ -10,7 +10,7 @@ analyze_agent = LlmAgent(
         api_version=os.environ["AZURE_API_VERSION"],
     ),
     name="analyze_agent",
-    output_key="analyze_results",
+    output_key="analysis_result",
     instruction="""You are an expert in VoIP technology, proficient in HTTP, WebRTC, SIP, SDP RTP, TCP, UDP and other related protocols. Structure the response in bullet points and output should be in md format.
         
         Context: You are analyzing logs from a Webex session, which includes HTTP requests, SIP messages, and potential errors. 
