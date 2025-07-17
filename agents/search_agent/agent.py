@@ -225,7 +225,7 @@ MAKE MULTIPLE CALLS TO THE TOOL FOR EACH INDEX.
         }
         ```
 *   **Message Field:**
-    Message field search should be done using a `wildcard` query as follows and always performed on both indexes unless the services selected are specific to one index.:
+    Message field search should be done using a `wildcard` query as follows and always performed on all 5 indexes unless the services selected are specific to one index.:
     {
       "index": "logstash-wxcalling",
       "query": {
@@ -239,7 +239,7 @@ MAKE MULTIPLE CALLS TO THE TOOL FOR EACH INDEX.
       }
     }
 
-    Include a wildcard search in the `message` field as or filter for all four indexes for all the searches that come in regardless of the field and index.
+    Include a wildcard search in the `message` field as or filter for all five indexes for all the searches that come in regardless of the field and index.
 
 **7. Consistency and Behavior:**
 *   **Index Selection:** Accurately determine the target index (`logstash-wxm-app` or `logstash-wxcalling`) based on the unique fields (`callId`, `traceId`, `mse`, `sse`) in the user request. Run search tool on both indexes if necessary.
