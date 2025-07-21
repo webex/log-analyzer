@@ -37,7 +37,7 @@ export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps
 
 
       <TabsContent value="charts" className="h-full overflow-y-auto">
-        <ChartsView mermaidCode={mermaidCode} />
+        <ChartsView plantUMLCode={mermaidCode} />
       </TabsContent>
     </Tabs>
     </div>
