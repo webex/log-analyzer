@@ -97,9 +97,10 @@ Ensure your bearer token is stored in `LITELLM_API_KEY`.
 
 ### 6. 🧠 Start the Backend
 
-From the project root, run:
+run:
 
 ```bash
+cd agents
 adk web
 ```
 
