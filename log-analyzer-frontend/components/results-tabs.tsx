@@ -12,6 +12,7 @@ interface ResultsTabsProps {
 
 export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps) {
   return (
+    console.log("ResultsTabs received mermaidCode:", mermaidCode), // Debug log
     <div className="w-full h-full overflow-hidden">
       <Tabs defaultValue="analysis" className="h-full">
       <TabsList className="grid w-full grid-cols-3 bg-gray-100">
@@ -37,7 +38,7 @@ export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps
 
 
       <TabsContent value="charts" className="h-full overflow-y-auto">
-        <ChartsView mermaidCode={mermaidCode} />
+        <ChartsView plantUMLCode={mermaidCode} />
       </TabsContent>
     </Tabs>
     </div>
