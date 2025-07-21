@@ -23,7 +23,7 @@ export function ChartsView({ plantUMLCode }: ChartsViewProps) {
       try {
         diagramRef.current.innerHTML = "";
 
-        // Method 1: Use POST request (most reliable)
+        // Use POST request 
         console.log("Sending PlantUML to Kroki via POST");
         
         const response = await fetch('https://kroki.io/plantuml/svg', {

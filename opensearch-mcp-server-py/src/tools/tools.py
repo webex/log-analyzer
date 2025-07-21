@@ -49,10 +49,17 @@ async def get_index_mapping_tool(args: GetIndexMappingArgs) -> list[dict]:
     except Exception as e:
         return [{"type": "text", "text": f"Error getting mapping: {str(e)}"}]
 
+OPENSEARCH_INDEX_URL_MAP = {
+    "logstash-wxm-app": "https://logs-api-ci-wxm-app.o.webex.com/",
+    "logstash-wxcalling": "https://logs-api-ci-wxcalling.o.webex.com/",
+    "logstash-wxm-app-eu1": "https://logs-api-ci-wxm-app-eu1.o.webex.com/",
+    "logstash-wxcalling-euc1": "https://logs-api-ci-wxcalling-euc1.o.webex.com/",
+    "logstash-wbx2-access": "https://logs-api-ci-wbx2-access.o.webex.com/",
+}
 
 async def search_index_tool(args: SearchIndexArgs) -> list[dict]:
     try:
-        opensearch_url = "https://logs-api-ci-wxm-app.o.webex.com/" if args.index == "logstash-wxm-app" else "https://logs-api-ci-wxcalling.o.webex.com/"
+        opensearch_url = OPENSEARCH_INDEX_URL_MAP[args.index]
         result = search_index(opensearch_url, args.index, args.query)
         formatted_result = json.dumps(result, indent=2)
 
