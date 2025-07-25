@@ -23,7 +23,8 @@ cd microservice-log-analyzer
 - Locate the `MCPToolset` configuration.
 
 - Update:
-  - `command` → Path to your local **UV** binary.
+  - `command` → Path to your local **UV** binary. 
+      refer to: https://www.uvicorn.org/#quickstart
   - `args` → Full path to your local `opensearch-mcp-server-py` repository.
 
 ```python
@@ -41,8 +42,8 @@ MCPToolset(
 
 ```bash
 cd log-analyzer-frontend
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 The UI will be available at [http://localhost:3000](http://localhost:3000).
@@ -64,34 +65,15 @@ The UI will be available at [http://localhost:3000](http://localhost:3000).
 
 4. **Copy** the token shown in the Authorization field.
 
-#### Set the Token for LiteLLM:
-
-You can provide the token via environment variable or directly in your agent code.
-
-**Option A: Set as environment variable**
-```bash
-export LITELLM_API_KEY="Bearer <your-webex-token>"
-```
-
-**Option B: Hardcode into agent (not recommended for production)**
-```python
-llm = ChatOpenAI(openai_api_key="Bearer <your-webex-token>", ...)
-```
-
-> Make sure `LITELLM_API_KEY` is accessible wherever LiteLLM is initialized in the agent stack (typically in `root_agent/agent.py`).
-
 ---
 
 ### 5. ✍️ Configure LLM Usage
 
+run:
+```pip install litellm```
+
 In `agents/root_agent/agent.py`:
-
-```python
-import os
-llm = ChatOpenAI(openai_api_key=os.getenv("LITELLM_API_KEY"), ...)
-```
-
-Ensure your bearer token is stored in `LITELLM_API_KEY`.
+Copy your bearer token in os.environ["AZURE_OPENAI_API_KEY"]=("...your token...")
 
 ---
 
