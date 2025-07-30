@@ -9,7 +9,7 @@ An AI-powered tool that helps analyze microservice logs. Built with a multi-agen
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
+git clone <https://sqbu-github.cisco.com/WebexDevPlatform/microservice-log-analyzer.git>
 cd microservice-log-analyzer
 ```
 
