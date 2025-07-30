@@ -6,7 +6,7 @@ An AI-powered tool that helps analyze microservice logs. Built with a multi-agen
 
 ## 🚀 Getting Started
 
-### 1. 📁 Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone <your-repo-url>
@@ -14,8 +14,26 @@ cd microservice-log-analyzer
 ```
 
 ---
+### 2. Install dependencies
+- Ensure you have Python>= 3.10 installed.
 
-### 2. 🔧 Configure MCP Server
+- Install Node.js>= 18 and pnpm
+
+- Create and activate a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+- Install python dependencies:
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 3. Configure MCP Server
 
 - Open:  
   `search_agent/agent.py`
@@ -38,7 +56,7 @@ MCPToolset(
 
 ---
 
-### 3. 🎨 Set Up the Frontend UI
+### 4. Set Up the Frontend UI
 
 ```bash
 cd log-analyzer-frontend
@@ -50,7 +68,7 @@ The UI will be available at [http://localhost:3000](http://localhost:3000).
 
 ---
 
-### 4. 🔐 Get and Use Webex Bearer Token (for LiteLLM)
+### 5. Configure LLM Usage
 
 > **Note**: The Webex bearer token is required to authenticate **LiteLLM**, which powers the LLM backend used for natural language analysis.
 
@@ -65,13 +83,7 @@ The UI will be available at [http://localhost:3000](http://localhost:3000).
 
 4. **Copy** the token shown in the Authorization field.
 
----
-
-### 5. ✍️ Configure LLM Usage
-
-run:
-```pip install litellm```
-
+### Setup:
 In `agents/root_agent/agent.py`:
 Copy your bearer token in os.environ["AZURE_OPENAI_API_KEY"]=("...your token...")
 
