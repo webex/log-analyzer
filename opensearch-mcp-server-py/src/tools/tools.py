@@ -53,7 +53,7 @@ OPENSEARCH_INDEX_URL_MAP = {
     "logstash-wxm-app": "https://logs-api-ci-wxm-app.o.webex.com/",
     "logstash-wxcalling": "https://logs-api-ci-wxcalling.o.webex.com/",
     "logstash-wxm-app-eu1": "https://logs-api-ci-wxm-app-eu1.o.webex.com/",
-    "logstash-wxcalling-euc1": "https://logs-api-ci-wxcalling-euc1.o.webex.com/",
+    "logstash-wxcallingeuc1": "https://logs-api-ci-wxcalling-euc1.o.webex.com/",
     "logstash-wbx2-access": "https://logs-api-ci-wbx2-access.o.webex.com/",
 }
 

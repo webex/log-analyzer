@@ -37,12 +37,13 @@ def _get_bearer_token(name: str, password: str, bearer_token_url: str) -> Option
             "password": password
         }
         headers = {"content-type": "application/json"}
-        
+        logger.info("SUI: {}".format(payload))
         logger.info("Requesting bearer token from identity broker")
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         
         token_data = response.json()
+        logger.info(token_data)
         bearer_token = token_data.get("BearerToken")
         
         if bearer_token:

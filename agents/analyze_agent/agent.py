@@ -40,7 +40,12 @@ calling_agent = LlmAgent(
         - Webex Calling Application Server (WxCAS): The core control application in Webex Calling responsible for enabling communication between source SSE and destination SSE.
         - Mercury: Webex's real-time messaging and signaling service that establishes websocket connections and helps to exchange information in the form of events. Mobius uses mercury to send events to SDK. SDK establishes a mercury connection which is a websocket connection to receive communication from mobius
             
-        Analyze the logs and provide detailed insights:\n{search_results} 
+        Analyze the logs and provide detailed insights. You will receive logs from TWO sources:
+        1. Mobius logs from {mobius_logs} (from logstash-wxm-app indexes)
+        2. SSE/MSE logs from {sse_mse_logs} (from logstash-wxcalling indexes)
+        
+        Combine insights from BOTH log sources to provide a complete end-to-end analysis.
+        
         Focus only on services and endpoints which are involved in the logs
         Your analysis should cover these key points:
         1. **Complete http request/response communication**
@@ -51,6 +56,7 @@ calling_agent = LlmAgent(
             - Log full SIP message flow (INVITE, 200 OK, ACK, BYE, etc.)
             - Capture details like origin endpoint and destination endpoint, timestamps, media details, status codes
             - Print relevant ids for this communication like device id, user id, call id, meeting id, tracking id, session id etc
+            - Correlate SIP flows between Mobius (from wxm-app logs) and SSE/MSE (from wxcalling logs)
         3. **Error Detection and Resolution**  
             - Identify any error events in the logs  
             - For each error: describe what happened, provide error codes, root causes, and step-by-step fixes  
@@ -78,7 +84,7 @@ calling_agent = LlmAgent(
 
         ---
         ### 📞 SIP Communication Flow 
-        Print the SIP communication following the below format:
+        Print the SIP communication following the below format. Correlate Mobius SIP and SSE/MSE SIP flows:
         /n
         → **[Timestamp]**: SIP message received from [source endpoint] to [destination endpoint]
         → **Source Endpoint**: e.g. Mobius, SSE, WxCAS
@@ -137,7 +143,12 @@ contact_center_agent = LlmAgent(
             - RAS: RAS handles the registration, activation, and provisioning of devices or services. It stores SIP REGISTER Contact and Path header with expiry and Metrics for webRTC active sessions and calls to webRTC phones
         
             
-        Analyze the logs and provide detailed insights:\n{search_results} 
+        Analyze the logs and provide detailed insights. You will receive logs from TWO sources:
+        1. Mobius logs from {mobius_logs} (from logstash-wxm-app indexes)
+        2. SSE/MSE logs from {sse_mse_logs} (from logstash-wxcalling indexes)
+        
+        Combine insights from BOTH log sources to provide a complete end-to-end analysis.
+        
         Focus only on services and endpoints which are involved in the logs
         Your analysis should cover these key points:
         1. **Complete http request/response communication**
@@ -148,6 +159,7 @@ contact_center_agent = LlmAgent(
             - Log full SIP message flow (INVITE, 200 OK, ACK, BYE, etc.)
             - Capture details like origin endpoint and destination endpoint, timestamps, media details, status codes
             - Print relevant ids for this communication like device id, user id, call id, meeting id, tracking id, session id etc
+            - Correlate SIP flows between Mobius (from wxm-app logs) and SSE/MSE (from wxcalling logs)
         3. **Error Detection and Resolution**  
             - Identify any error events in the logs  
             - For each error: describe what happened, provide error codes, root causes, and step-by-step fixes  
@@ -175,7 +187,7 @@ contact_center_agent = LlmAgent(
 
         ---
         ### 📞 SIP Communication Flow 
-        Print the SIP communication following the below format:
+        Print the SIP communication following the below format. Correlate Mobius SIP and SSE/MSE SIP flows:
         /n
         → **[Timestamp]**: SIP message received from [source endpoint] to [destination endpoint]
         → **Source Endpoint**: e.g. Mobius, SSE, WxCAS

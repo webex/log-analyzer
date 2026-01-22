@@ -44,11 +44,13 @@ def _get_bearer_token(name: str, password: str, bearer_token_url: str) -> Option
         }
         headers = {"content-type": "application/json"}
         
+        logger.info(f"Bearer token URL: {payload}")
         logger.info("Requesting bearer token from identity broker")
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         
         token_data = response.json()
+        logger.info(token_data)
         bearer_token = token_data.get("BearerToken")
         
         if bearer_token:
@@ -103,6 +105,8 @@ def _get_oauth_access_token(bearer_token: str, client_id: str, client_secret: st
         
         token_data = response.json()
         access_token = token_data.get("access_token")
+        
+        print(access_token)
         
         if access_token:
             logger.info("Successfully obtained OAuth access token")
@@ -178,8 +182,8 @@ def initialize_client(opensearch_url: str) -> OpenSearch:
         'use_ssl': (parsed_url.scheme == "https"),
         'verify_certs': True,
         'connection_class': RequestsHttpConnection,
-        'timeout': 300,  # Request timeout in seconds (5 minutes) for large queries
-        'connection_timeout': 30,  # Connection timeout in seconds
+        'timeout': 1000,  # Request timeout in seconds (5 minutes) for large queries
+        'connection_timeout': 1000,  # Connection timeout in seconds
     }
 
     # 1. Try OAuth authentication
