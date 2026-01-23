@@ -14,6 +14,9 @@ export class SessionManager {
     }
 
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minutes
+
       const response = await fetch("/api/adk-proxy", {
         method: "POST",
         headers: {
@@ -24,7 +27,10 @@ export class SessionManager {
           userId: this.userId,
           sessionId: this.sessionId,
         }),
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
 
       if (response.ok) {
         this.sessionCreated = true
@@ -42,6 +48,9 @@ export class SessionManager {
 
   async sendQuery(searchParams: any): Promise<any> {
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minutes
+
       const response = await fetch("/api/adk-proxy", {
         method: "POST",
         headers: {
@@ -53,7 +62,10 @@ export class SessionManager {
           sessionId: this.sessionId,
           searchParams,
         }),
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         const error = await response.text()
@@ -80,6 +92,9 @@ export class SessionManager {
     }
 
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 seconds
+
       await fetch("/api/adk-proxy", {
         method: "POST",
         headers: {
@@ -90,7 +105,10 @@ export class SessionManager {
           userId: this.userId,
           sessionId: this.sessionId,
         }),
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
       this.sessionCreated = false
     } catch (error) {
       console.error("Failed to delete session:", error)

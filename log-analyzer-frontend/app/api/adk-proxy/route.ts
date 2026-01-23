@@ -7,64 +7,88 @@ export async function POST(request: NextRequest) {
     const { action, userId, sessionId, searchParams } = await request.json()
 
     if (action === "createSession") {
-      const response = await fetch(`${ADK_API_URL}/apps/root_agent/users/${userId}/sessions/${sessionId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          state: {
-            initialized: true,
-            timestamp: new Date().toISOString(),
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 600000)
+
+      try {
+        const response = await fetch(`${ADK_API_URL}/apps/root_agent/users/${userId}/sessions/${sessionId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      })
+          body: JSON.stringify({
+            state: {
+              initialized: true,
+              timestamp: new Date().toISOString(),
+            },
+          }),
+          signal: controller.signal,
+        })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        return NextResponse.json({ error: errorText }, { status: response.status })
+        if (!response.ok) {
+          const errorText = await response.text()
+          return NextResponse.json({ error: errorText }, { status: response.status })
+        }
+
+        const sessionData = await response.json()
+        return NextResponse.json(sessionData)
+      } finally {
+        clearTimeout(timeoutId)
       }
-
-      const sessionData = await response.json()
-      return NextResponse.json(sessionData)
     }
 
     if (action === "sendQuery") {
-      const response = await fetch(`${ADK_API_URL}/run`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          appName: "root_agent",
-          userId: userId,
-          sessionId: sessionId,
-          newMessage: {
-            role: "user",
-            parts: [
-              {
-                text: JSON.stringify(searchParams),
-              },
-            ],
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 600000)
+
+      try {
+        const response = await fetch(`${ADK_API_URL}/run`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      })
+          body: JSON.stringify({
+            appName: "root_agent",
+            userId: userId,
+            sessionId: sessionId,
+            newMessage: {
+              role: "user",
+              parts: [
+                {
+                  text: JSON.stringify(searchParams),
+                },
+              ],
+            },
+          }),
+          signal: controller.signal,
+        })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        return NextResponse.json({ error: errorText }, { status: response.status })
+        if (!response.ok) {
+          const errorText = await response.text()
+          return NextResponse.json({ error: errorText }, { status: response.status })
+        }
+
+        const events = await response.json()
+        return NextResponse.json(events)
+      } finally {
+        clearTimeout(timeoutId)
       }
-
-      const events = await response.json()
-      return NextResponse.json(events)
     }
 
     if (action === "deleteSession") {
-      const response = await fetch(`${ADK_API_URL}/apps/root_agent/users/${userId}/sessions/${sessionId}`, {
-        method: "DELETE",
-      })
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000)
 
-      return NextResponse.json({ success: true })
+      try {
+        const response = await fetch(`${ADK_API_URL}/apps/root_agent/users/${userId}/sessions/${sessionId}`, {
+          method: "DELETE",
+          signal: controller.signal,
+        })
+
+        return NextResponse.json({ success: true })
+      } finally {
+        clearTimeout(timeoutId)
+      }
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 })

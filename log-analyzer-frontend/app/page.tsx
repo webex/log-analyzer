@@ -25,6 +25,7 @@ export default function HomePage() {
       const events = await sessionManager.sendQuery(searchParams);
       console.log("Search events received:", events);
 
+
       let logs: any[] = [];
       let extractedAnalysis = "";
       let extractedMermaid = "";
@@ -34,7 +35,7 @@ export default function HomePage() {
         const parts = event.content?.parts || [];
 
         // Extract logs from search_agent
-        if (author === "search_agent") {
+        if ((author === "wxm_search_agent" || author === "wxcalling_search_agent") && (parts.length > 0 && parts[0].functionResponse)) {
           parts.forEach((part: any) => {
             try {
               const hits = JSON.parse(
@@ -56,8 +57,11 @@ export default function HomePage() {
         if (author === "sequence_diagram_agent" && !extractedMermaid) {
           extractedMermaid = parts[0]?.text || "";
         }
-      });
 
+      }); 
+
+      console.log("Combined Logs:", logs);
+      
       setResults(logs);
       setAnalysis(extractedAnalysis);
       setMermaidCode(extractedMermaid);

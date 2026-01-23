@@ -2,7 +2,7 @@ import os
 from google.adk.agents import SequentialAgent
 
 os.environ["AZURE_OPENAI_API_KEY"] = (
-    "ZWZkNzNhMzQtNTI3OS00NWFlLWJlOWItMzE4YWJhOWFhZTdiNDRmM2MzNTUtOTE1_A52D_1eb65fdf-9643-417f-9974-ad72cae0e10f"
+    "Yzk3ZTkyM2UtMTYwMC00MmYwLTlkYjEtNDg1MTVhOTk4MDhlZmJmNzgyZGUtNzNm_A52D_1eb65fdf-9643-417f-9974-ad72cae0e10f"
 )
 os.environ["AZURE_OPENAI_ENDPOINT"] = (
     "https://llm-proxy.us-east-2.int.infra.intelligence.webex.com/azure/v1"
