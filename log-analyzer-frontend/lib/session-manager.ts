@@ -1,3 +1,5 @@
+const ADK_API_URL = process.env.NEXT_PUBLIC_ADK_API_URL || "http://127.0.0.1:8000"
+
 export class SessionManager {
   private userId: string
   private sessionId: string
@@ -17,18 +19,22 @@ export class SessionManager {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minutes
 
-      const response = await fetch("/api/adk-proxy", {
+      const response = await fetch(
+        `${ADK_API_URL}/apps/root_agent/users/${this.userId}/sessions/${this.sessionId}`,
+        {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          action: "createSession",
-          userId: this.userId,
-          sessionId: this.sessionId,
-        }),
-        signal: controller.signal,
-      })
+          body: JSON.stringify({
+            state: {
+              initialized: true,
+              timestamp: new Date().toISOString(),
+            },
+          }),
+          signal: controller.signal,
+        }
+      )
 
       clearTimeout(timeoutId)
 
@@ -51,16 +57,23 @@ export class SessionManager {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minutes
 
-      const response = await fetch("/api/adk-proxy", {
+      const response = await fetch(`${ADK_API_URL}/run`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          action: "sendQuery",
+          appName: "root_agent",
           userId: this.userId,
           sessionId: this.sessionId,
-          searchParams,
+          newMessage: {
+            role: "user",
+            parts: [
+              {
+                text: JSON.stringify(searchParams),
+              },
+            ],
+          },
         }),
         signal: controller.signal,
       })
@@ -95,18 +108,13 @@ export class SessionManager {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 seconds
 
-      await fetch("/api/adk-proxy", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "deleteSession",
-          userId: this.userId,
-          sessionId: this.sessionId,
-        }),
-        signal: controller.signal,
-      })
+      await fetch(
+        `${ADK_API_URL}/apps/root_agent/users/${this.userId}/sessions/${this.sessionId}`,
+        {
+          method: "DELETE",
+          signal: controller.signal,
+        }
+      )
 
       clearTimeout(timeoutId)
       this.sessionCreated = false

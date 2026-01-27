@@ -54,6 +54,19 @@ MCPToolset(
 
 - Make sure required environment variables for OpenSearch/MCP are set properly.
 
+Create a `.env` file at the repo root with:
+
+```bash
+OPENSEARCH_OAUTH_TOKEN=
+OPENSEARCH_OAUTH_NAME=
+OPENSEARCH_OAUTH_PASSWORD=
+OPENSEARCH_OAUTH_CLIENT_ID=
+OPENSEARCH_OAUTH_CLIENT_SECRET=
+OPENSEARCH_OAUTH_SCOPE=
+OPENSEARCH_OAUTH_BEARER_TOKEN_URL=
+OPENSEARCH_OAUTH_TOKEN_URL=
+```
+
 ---
 
 ### 4. Set Up the Frontend UI
@@ -65,6 +78,12 @@ pnpm run dev
 ```
 
 The UI will be available at [http://localhost:3000](http://localhost:3000).
+
+Set the backend URL for the UI:
+
+```bash
+export NEXT_PUBLIC_ADK_API_URL="http://127.0.0.1:8000"
+```
 
 ---
 
@@ -107,6 +126,22 @@ This will launch the backend agent system using the Agent Development Kit (ADK).
 - **Frontend:** http://localhost:3000  
 - **Backend:** Running with ADK and LiteLLM  
 - **LLM Auth:** Via Webex bearer token  
+
+---
+
+## 🌍 Host the Frontend on GitHub Pages
+
+This project includes a GitHub Actions workflow that builds a static Next.js
+export and publishes it to GitHub Pages.
+
+1. Set a repo variable named `NEXT_PUBLIC_ADK_API_URL` to your ngrok URL
+   (example: `https://<your-subdomain>.ngrok.app`).
+2. Push to `main` or run the workflow manually.
+3. In GitHub Pages settings, choose **Source: GitHub Actions**.
+
+Notes:
+- The workflow sets `NEXT_PUBLIC_BASE_PATH` to `/<repo-name>` automatically.
+- Ensure your backend allows CORS from the GitHub Pages domain.
 
 ---
 

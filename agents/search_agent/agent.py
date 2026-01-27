@@ -1,4 +1,5 @@
 import os
+import shutil
 from google.adk.agents import LlmAgent, SequentialAgent
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools.mcp_tool.mcp_toolset import (
@@ -6,6 +7,8 @@ from google.adk.tools.mcp_tool.mcp_toolset import (
     StdioServerParameters,
     StdioConnectionParams,
 )
+
+UV_PATH = "/opt/homebrew/bin/uv"
 
 # Agent 1: Search Mobius logs in wxm-app indexes
 wxm_search_agent = LlmAgent(
@@ -120,10 +123,10 @@ Session ID search (search in both local and remote):
             connection_params=StdioConnectionParams(
                 timeout=1000.0,
                 server_params=StdioServerParameters(
-                    command="/Users/sarangsa/.local/bin/uv",
+                    command=UV_PATH,
                     args=[
                         "--directory",
-                        "/Users/sarangsa/Code/microservice-log-analyzer/opensearch-mcp-server-py",
+                        "/Users/pkesari/Desktop/WorkProjects/microservice-log-analyzer/opensearch-mcp-server-py",
                         "run",
                         "--",
                         "python",
@@ -264,10 +267,10 @@ Display: "Found X SSE/MSE logs. Preparing comprehensive analysis..."
             connection_params=StdioConnectionParams(
                 timeout=1000.0,
                 server_params=StdioServerParameters(
-                    command="/Users/sarangsa/.local/bin/uv",
+                    command=UV_PATH,
                     args=[
                         "--directory",
-                        "/Users/sarangsa/Code/microservice-log-analyzer/opensearch-mcp-server-py",
+                        "/Users/pkesari/Desktop/WorkProjects/microservice-log-analyzer/opensearch-mcp-server-py",
                         "run",
                         "--",
                         "python",
@@ -402,10 +405,10 @@ Display: "Found X WxCAS logs. Preparing comprehensive analysis..."
             connection_params=StdioConnectionParams(
                 timeout=1000.0,
                 server_params=StdioServerParameters(
-                    command="/Users/sarangsa/.local/bin/uv",
+                    command=UV_PATH,
                     args=[
                         "--directory",
-                        "/Users/sarangsa/Code/microservice-log-analyzer/opensearch-mcp-server-py",
+                        "/Users/pkesari/Desktop/WorkProjects/microservice-log-analyzer/opensearch-mcp-server-py",
                         "run",
                         "--",
                         "python",

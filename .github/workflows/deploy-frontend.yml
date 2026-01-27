@@ -1,0 +1,61 @@
+name: Deploy Frontend to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "log-analyzer-frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: "log-analyzer-frontend/pnpm-lock.yaml"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "10.12.4"
+
+      - name: Install dependencies
+        working-directory: log-analyzer-frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build static site
+        working-directory: log-analyzer-frontend
+        env:
+          NEXT_PUBLIC_EXPORT: "true"
+          NEXT_PUBLIC_BASE_PATH: "/${{ github.event.repository.name }}"
+          NEXT_PUBLIC_ADK_API_URL: "${{ vars.NEXT_PUBLIC_ADK_API_URL }}"
+        run: pnpm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: log-analyzer-frontend/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
