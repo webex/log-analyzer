@@ -291,9 +291,147 @@ Display: "Found X SSE/MSE logs. Preparing comprehensive analysis..."
     ],
 )
 
+# Agent 4: Extract SSE Call-ID from SSE/MSE logs
+sse_callid_extractor_agent = LlmAgent(
+    model=LiteLlm(
+        model="azure/gpt-4.1",
+        api_key=os.environ["AZURE_OPENAI_API_KEY"],
+        api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
+        api_version=os.environ["AZURE_API_VERSION"],
+    ),
+    name="sse_callid_extractor_agent",
+    output_key="extracted_sse_callid",
+    instruction="""
+You are the SSE Call-ID Extraction Agent. Your job is to extract SSE Call-ID from SIP SSE logs.
+
+**1. Core Task:**
+Analyze the SSE/MSE logs from the previous agent ({sse_mse_logs}) and extract the SSE Call-ID for WxCAS log searches.
+
+**2. SSE Call-ID Pattern:**
+- SSE Call-IDs follow the pattern: `SSE` followed by digits, then `@`, then IP address
+- Example: `SSE0520080392201261106889615@10.249.187.80`
+- Regex pattern: `SSE[0-9]+@[0-9.]+`
+- They appear in SIP message headers as `Call-ID:` field
+
+**3. Extraction Logic:**
+1. Parse the SSE/MSE logs JSON response from {sse_mse_logs}
+2. Look for SIP SSE logs that contain "Call-ID:" in the message
+3. Extract the Call-ID value that matches the SSE pattern
+4. Focus on logs with message type like "RESPONSE100", "INVITE", or other SIP messages
+5. Example log pattern:
+   ```
+   Transformer Consumed SIP Event: Message type: RESPONSE100
+   ...
+   Call-ID:SSE0520080392201261106889615@10.249.187.80
+   ```
+
+**4. Output Format:**
+You MUST output in this exact format:
+```
+EXTRACTED_SSE_CALLID: <the_actual_sse_callid>
+```
+
+If no valid SSE Call-ID is found, output:
+```
+EXTRACTED_SSE_CALLID: NONE
+```
+
+**5. Important Notes:**
+- Only extract Call-IDs that match the SSE pattern (starts with "SSE", contains digits and IP)
+- Look in the `_source.message` field of the log entries
+- Extract the first valid SSE Call-ID found
+- Display to user: "Extracted SSE Call-ID: <id>. Searching WxCAS logs..."
+""",
+)
+
+# Agent 5: Search WxCAS logs in wxcalling indexes
+wxcas_search_agent = LlmAgent(
+    model=LiteLlm(
+        model="azure/gpt-4.1",
+        api_key=os.environ["AZURE_OPENAI_API_KEY"],
+        api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
+        api_version=os.environ["AZURE_API_VERSION"],
+    ),
+    name="wxcas_search_agent",
+    output_key="wxcas_logs",
+    instruction="""
+You are the WxCAS Log Search Agent. Your job is to search for WxCAS (Webex Calling Application Server) logs using the extracted SSE Call-ID.
+
+**1. Core Task:**
+Search both `logstash-wxcalling` and `logstash-wxcallingeuc1` indexes for WxCAS logs using the Call-ID from the previous agent.
+
+**2. Input:**
+Read the extracted SSE Call-ID from {extracted_sse_callid}.
+- If it says "EXTRACTED_SSE_CALLID: NONE", skip the search and return empty results
+- Otherwise, use the extracted Call-ID for exact match search
+
+**3. Query Construction:**
+
+**CRITICAL**: You MUST make 2 separate tool calls - one for `logstash-wxcalling` and one for `logstash-wxcallingeuc1`.
+
+Use exact match on the `callId.keyword` field with the extracted Call-ID and filter for WxCAS service:
+
+```json
+{
+  "index": "logstash-wxcalling",
+  "query": {
+    "query": {
+      "bool": {
+        "must": [
+          { "term": { "callId.keyword": "<extracted_sse_callid>" } },
+        ]
+      }
+    },
+    "size": 10000,
+    "sort": [ { "@timestamp": { "order": "asc" } } ]
+  }
+}
+```
+
+**4. Output:**
+Save the entire JSON response from both indexes to agent state.
+Display: "Found X WxCAS logs. Preparing comprehensive analysis..."
+
+**5. Important:**
+- Use exact term match for callId.keyword (not wildcard)
+- Sort by timestamp ascending for chronological analysis
+- If no Call-ID was extracted, return empty results gracefully
+""",
+    tools=[
+        MCPToolset(
+            connection_params=StdioConnectionParams(
+                timeout=1000.0,
+                server_params=StdioServerParameters(
+                    command="/Users/sarangsa/.local/bin/uv",
+                    args=[
+                        "--directory",
+                        "/Users/sarangsa/Code/microservice-log-analyzer/opensearch-mcp-server-py",
+                        "run",
+                        "--",
+                        "python",
+                        "-m",
+                        "mcp_server_opensearch",
+                    ],
+                    env={
+                        "OPENSEARCH_OAUTH_TOKEN": "ZTViYjE2ZTMtNGE0OS00YzJhLThiMTItYWY4YTA2NDIyOTJmNmNkNjE5N2UtZmEz_PF84_6078fba4-49d9-4291-9f7b-80116aab6974",
+                        "OPENSEARCH_OAUTH_NAME": "MicroserviceLogAnalyzer",
+                        "OPENSEARCH_OAUTH_PASSWORD": "QBLP.qsxh.16.VIKL.cdwz.38.CZKP.rtwm.3467",
+                        "OPENSEARCH_OAUTH_CLIENT_ID": "C652d21a85854402b5bd7b2207ef96575e47bbb5c168008eeaba51ec7d8e37e93",
+                        "OPENSEARCH_OAUTH_CLIENT_SECRET": "84ec522d2e99bdf8ac2386c44210f1e921f7cab0f65db734f27798ea43545788",
+                        "OPENSEARCH_OAUTH_SCOPE": "lma-logging:serviceowners_read lma-logging:wxcalling_read",
+                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": "https://idbroker.webex.com/idb/token/6078fba4-49d9-4291-9f7b-80116aab6974/v2/actions/GetBearerToken/invoke",
+                        "OPENSEARCH_OAUTH_TOKEN_URL": "https://idbroker.webex.com/idb/oauth2/v1/access_token",
+                    },
+                ),
+            ),
+            tool_filter=["SearchIndexTool"],
+        ),
+    ],
+)
+
 # Main Search Agent - Sequential Coordinator
 search_agent = SequentialAgent(
     name="search_agent",
-    sub_agents=[wxm_search_agent, session_extractor_agent, wxcalling_search_agent],
-    description="Executes a sequence of log searching: Mobius logs → Session extraction → SSE/MSE logs",
+    sub_agents=[wxm_search_agent, session_extractor_agent, wxcalling_search_agent, sse_callid_extractor_agent, wxcas_search_agent],
+    description="Executes a sequence of log searching: Mobius logs → Session extraction → SSE/MSE logs → SSE Call-ID extraction → WxCAS logs",
 )

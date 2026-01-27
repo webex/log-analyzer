@@ -40,11 +40,18 @@ calling_agent = LlmAgent(
         - Webex Calling Application Server (WxCAS): The core control application in Webex Calling responsible for enabling communication between source SSE and destination SSE.
         - Mercury: Webex's real-time messaging and signaling service that establishes websocket connections and helps to exchange information in the form of events. Mobius uses mercury to send events to SDK. SDK establishes a mercury connection which is a websocket connection to receive communication from mobius
             
-        Analyze the logs and provide detailed insights. You will receive logs from TWO sources:
+        Analyze the logs and provide detailed insights. You will receive logs from THREE sources:
         1. Mobius logs from {mobius_logs} (from logstash-wxm-app indexes)
         2. SSE/MSE logs from {sse_mse_logs} (from logstash-wxcalling indexes)
+        3. WxCAS logs from {wxcas_logs} (from logstash-wxcalling indexes) - if available
         
-        Combine insights from BOTH log sources to provide a complete end-to-end analysis.
+        Combine insights from ALL log sources to provide a complete end-to-end analysis.
+        
+        **WxCAS (Webex Calling Application Server) Analysis**:
+        - WxCAS is the core control application in Webex Calling responsible for call routing and decision-making
+        - Correlate Call-IDs between SSE logs and WxCAS logs to track end-to-end call flow
+        - Analyze WxCAS routing decisions, call state transitions, and error conditions
+        - Look for WxCAS-specific error codes and failure scenarios
         
         Focus only on services and endpoints which are involved in the logs
         Your analysis should cover these key points:
@@ -143,11 +150,18 @@ contact_center_agent = LlmAgent(
             - RAS: RAS handles the registration, activation, and provisioning of devices or services. It stores SIP REGISTER Contact and Path header with expiry and Metrics for webRTC active sessions and calls to webRTC phones
         
             
-        Analyze the logs and provide detailed insights. You will receive logs from TWO sources:
+        Analyze the logs and provide detailed insights. You will receive logs from THREE sources:
         1. Mobius logs from {mobius_logs} (from logstash-wxm-app indexes)
         2. SSE/MSE logs from {sse_mse_logs} (from logstash-wxcalling indexes)
+        3. WxCAS logs from {wxcas_logs} (from logstash-wxcalling indexes) - if available
         
-        Combine insights from BOTH log sources to provide a complete end-to-end analysis.
+        Combine insights from ALL log sources to provide a complete end-to-end analysis.
+        
+        **WxCAS (Webex Calling Application Server) Analysis**:
+        - WxCAS is the core control application in Webex Calling responsible for call routing and decision-making
+        - Correlate Call-IDs between SSE logs and WxCAS logs to track end-to-end call flow
+        - Analyze WxCAS routing decisions, call state transitions, and error conditions
+        - Look for WxCAS-specific error codes and failure scenarios
         
         Focus only on services and endpoints which are involved in the logs
         Your analysis should cover these key points:

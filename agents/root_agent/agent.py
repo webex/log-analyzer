@@ -2,7 +2,7 @@ import os
 from google.adk.agents import SequentialAgent
 
 os.environ["AZURE_OPENAI_API_KEY"] = (
-    "Yzk3ZTkyM2UtMTYwMC00MmYwLTlkYjEtNDg1MTVhOTk4MDhlZmJmNzgyZGUtNzNm_A52D_1eb65fdf-9643-417f-9974-ad72cae0e10f"
+    "MmYyZDUwODgtNGM1MC00MWU5LWFiOTMtMmE0MzRmMjZhMDU4NWM3YmExM2YtZjQ0_A52D_1eb65fdf-9643-417f-9974-ad72cae0e10f"
 )
 os.environ["AZURE_OPENAI_ENDPOINT"] = (
     "https://llm-proxy.us-east-2.int.infra.intelligence.webex.com/azure/v1"
@@ -14,7 +14,7 @@ from search_agent.agent import search_agent
 from visualAgent.agent import sequence_diagram_agent
 
 root_agent = SequentialAgent(
-    name="MicorserviceLogAnalyzerAgent",
+    name="MicroserviceLogAnalyzerAgent",
     sub_agents=[search_agent, analyze_agent, sequence_diagram_agent],
     description="Executes a sequence of log searching and analysis agents.",
 )

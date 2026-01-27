@@ -2,6 +2,16 @@ import { type NextRequest, NextResponse } from "next/server"
 
 const ADK_API_URL = process.env.NEXT_PUBLIC_ADK_API_URL || "http://localhost:8000"
 
+// Configure fetch with extended timeouts for long-running agent operations
+const fetchWithTimeout = (url: string, options: RequestInit = {}) => {
+  return fetch(url, {
+    ...options,
+    // @ts-ignore - undici-specific options
+    headersTimeout: 600000, // 10 minutes for headers
+    bodyTimeout: 600000, // 10 minutes for body
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { action, userId, sessionId, searchParams } = await request.json()
@@ -11,7 +21,7 @@ export async function POST(request: NextRequest) {
       const timeoutId = setTimeout(() => controller.abort(), 600000)
 
       try {
-        const response = await fetch(`${ADK_API_URL}/apps/root_agent/users/${userId}/sessions/${sessionId}`, {
+        const response = await fetchWithTimeout(`${ADK_API_URL}/apps/root_agent/users/${userId}/sessions/${sessionId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -42,7 +52,7 @@ export async function POST(request: NextRequest) {
       const timeoutId = setTimeout(() => controller.abort(), 600000)
 
       try {
-        const response = await fetch(`${ADK_API_URL}/run`, {
+        const response = await fetchWithTimeout(`${ADK_API_URL}/run`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -80,7 +90,7 @@ export async function POST(request: NextRequest) {
       const timeoutId = setTimeout(() => controller.abort(), 30000)
 
       try {
-        const response = await fetch(`${ADK_API_URL}/apps/root_agent/users/${userId}/sessions/${sessionId}`, {
+        const response = await fetchWithTimeout(`${ADK_API_URL}/apps/root_agent/users/${userId}/sessions/${sessionId}`, {
           method: "DELETE",
           signal: controller.signal,
         })

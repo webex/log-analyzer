@@ -23,7 +23,7 @@ export function ChartsView({ plantUMLCode }: ChartsViewProps) {
       try {
         diagramRef.current.innerHTML = "";
 
-        // Use POST request 
+        // Use POST request with caching via browser cache
         console.log("Sending PlantUML to Kroki via POST");
         
         const response = await fetch('https://kroki.io/plantuml/svg', {
@@ -32,7 +32,8 @@ export function ChartsView({ plantUMLCode }: ChartsViewProps) {
             'Content-Type': 'text/plain',
             'Accept': 'image/svg+xml'
           },
-          body: plantUMLCode.trim() // Send raw PlantUML code
+          body: plantUMLCode.trim(), // Send raw PlantUML code
+          cache: 'force-cache' // Let browser handle caching
         });
 
         if (!response.ok) {
@@ -49,6 +50,14 @@ export function ChartsView({ plantUMLCode }: ChartsViewProps) {
         }
 
         diagramRef.current.innerHTML = svg;
+        
+        // Constrain SVG size to fit container
+        const svgElement = diagramRef.current.querySelector('svg');
+        if (svgElement) {
+          svgElement.style.maxWidth = '100%';
+          svgElement.style.height = 'auto';
+        }
+        
         console.log("Diagram rendered successfully");
 
       } catch (err) {
@@ -102,7 +111,7 @@ export function ChartsView({ plantUMLCode }: ChartsViewProps) {
   }
 
   return (
-    <div className="py-8">
+    <div className="py-2">
       <div className="w-full">
         <Card>
           <CardHeader>
@@ -112,7 +121,7 @@ export function ChartsView({ plantUMLCode }: ChartsViewProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="w-full overflow-auto">
+            <div className="w-full overflow-auto h-full">
               {loading && (
                 <div className="flex justify-center items-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -121,11 +130,11 @@ export function ChartsView({ plantUMLCode }: ChartsViewProps) {
               )}
               
               {!loading && !error && (
-                <div ref={diagramRef} className="flex justify-center" />
+                <div ref={diagramRef} className="flex justify-center max-w-full" style={{ maxHeight: '100%' }} />
               )}
               
               {!loading && error && (
-                <div ref={diagramRef} />
+                <div ref={diagramRef} className="max-w-full" />
               )}
             </div>
           </CardContent>

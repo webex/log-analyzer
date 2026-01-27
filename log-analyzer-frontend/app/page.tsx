@@ -30,16 +30,17 @@ export default function HomePage() {
       let extractedAnalysis = "";
       let extractedMermaid = "";
 
-      events.forEach((event: any) => {
+      events.forEach((event: any, iter: number) => {
         const author = event.author;
         const parts = event.content?.parts || [];
 
         // Extract logs from search_agent
-        if ((author === "wxm_search_agent" || author === "wxcalling_search_agent") && (parts.length > 0 && parts[0].functionResponse)) {
+        if ((author === "wxm_search_agent" || author === "wxcalling_search_agent" || author === "wxcas_search_agent") && (parts.length > 0 && parts[0].functionResponse)) {
+          console.log(`Processing logs from ${author} at event index ${iter}`);
           parts.forEach((part: any) => {
             try {
               const hits = JSON.parse(
-                part.functionResponse?.response?.result?.content?.[0]?.text || "{}"
+                part.functionResponse?.response?.content?.[0]?.text || "{}"
               )?.hits?.hits;
               if (hits) logs.push(...hits);
             } catch (error) {
@@ -49,7 +50,7 @@ export default function HomePage() {
         }
 
         // Extract analysis from analyze_agent
-        if (author === "analyze_agent" && !extractedAnalysis) {
+        if ((author === "calling_agent" || author === "contact_center_agent") && !extractedAnalysis) {
           extractedAnalysis = parts[0]?.text || "";
         }
 
@@ -95,13 +96,13 @@ export default function HomePage() {
             </div>
           )}
 
-          {results && results.length === 0 && !loading && (
+          {/* {results && results.length === 0 && !loading && (
             <div className="mt-12 text-center text-gray-500">
               No results found for your query :(
             </div>
-          )}
+          )} */}
 
-          {results && results.length > 0 && (
+          {analysis !== "" && (
             <ResultsTabs
               results={results}
               analysis={analysis}
