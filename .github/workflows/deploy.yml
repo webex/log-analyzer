@@ -5,7 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "log-analyzer-frontend/**"
-      - ".github/workflows/deploy-frontend.yml"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
 permissions:
@@ -26,7 +26,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
       - name: Enable pnpm via corepack
         run: |

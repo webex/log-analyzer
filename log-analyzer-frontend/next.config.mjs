@@ -26,7 +26,7 @@ export default withPWA({
   register: true,
   skipWaiting: true,
   fallbacks: {
-    document: '/offline',
+    document: `${basePath}/offline`,
   },
   workboxOptions: {
     runtimeCaching: [
