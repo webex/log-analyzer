@@ -24,7 +24,11 @@ wxm_search_agent = LlmAgent(
 You are the Mobius Log Search Agent. Your job is to search for Mobius microservice logs in the logstash-wxm-app indexes.
 
 **1. Core Task:**
-Search both `logstash-wxm-app` and `logstash-wxm-app-eu1` indexes for Mobius-related logs based on user-provided identifiers.
+Search the appropriate `logstash-wxm-app` indexes based on the selected regions:
+- US region: `logstash-wxm-app`
+- EU region: `logstash-wxm-app-eu1`
+
+Check the user's region selection and ONLY search the indexes for the selected regions.
 
 **2. Searchable Fields:**
 *   `fields.WEBEX_TRACKINGID.keyword`
@@ -39,7 +43,10 @@ Search both `logstash-wxm-app` and `logstash-wxm-app-eu1` indexes for Mobius-rel
 
 **3. Query Construction:**
 
-**CRITICAL**: You MUST make 2 separate tool calls - one for `logstash-wxm-app` and one for `logstash-wxm-app-eu1`.
+**CRITICAL**: Make separate tool calls based on selected regions:
+- If "us" is selected: query `logstash-wxm-app`
+- If "eu" is selected: query `logstash-wxm-app-eu1`
+- If both are selected: make 2 separate tool calls (one for each index)
 
 Always include Mobius service filter and sort by timestamp ascending:
 
@@ -214,7 +221,11 @@ wxcalling_search_agent = LlmAgent(
 You are the SSE/MSE Log Search Agent. Your job is to search for SSE and MSE microservice logs using the extracted session ID.
 
 **1. Core Task:**
-Search both `logstash-wxcalling` and `logstash-wxcallingeuc1` indexes for SSE/MSE logs using the session ID from the previous agent.
+Search the appropriate `logstash-wxcalling` indexes based on the selected regions:
+- US region: `logstash-wxcalling`
+- EU region: `logstash-wxcallingeuc1`
+
+Check the user's region selection and ONLY search the indexes for the selected regions.
 
 **2. Input:**
 Read the extracted session ID from {extracted_session_id}. 
@@ -223,7 +234,10 @@ Read the extracted session ID from {extracted_session_id}.
 
 **3. Query Construction:**
 
-**CRITICAL**: You MUST make 2 separate tool calls - one for `logstash-wxcalling` and one for `logstash-wxcallingeuc1`.
+**CRITICAL**: Make separate tool calls based on selected regions:
+- If "us" is selected: query `logstash-wxcalling`
+- If "eu" is selected: query `logstash-wxcallingeuc1`
+- If both are selected: make 2 separate tool calls (one for each index)
 
 Use wildcard search on the `message` field with the session ID and filter for SSE/MSE services:
 
@@ -361,7 +375,11 @@ wxcas_search_agent = LlmAgent(
 You are the WxCAS Log Search Agent. Your job is to search for WxCAS (Webex Calling Application Server) logs using the extracted SSE Call-ID.
 
 **1. Core Task:**
-Search both `logstash-wxcalling` and `logstash-wxcallingeuc1` indexes for WxCAS logs using the Call-ID from the previous agent.
+Search the appropriate `logstash-wxcalling` indexes based on the selected regions:
+- US region: `logstash-wxcalling`
+- EU region: `logstash-wxcallingeuc1`
+
+Check the user's region selection and ONLY search the indexes for the selected regions.
 
 **2. Input:**
 Read the extracted SSE Call-ID from {extracted_sse_callid}.
@@ -370,7 +388,10 @@ Read the extracted SSE Call-ID from {extracted_sse_callid}.
 
 **3. Query Construction:**
 
-**CRITICAL**: You MUST make 2 separate tool calls - one for `logstash-wxcalling` and one for `logstash-wxcallingeuc1`.
+**CRITICAL**: Make separate tool calls based on selected regions:
+- If "us" is selected: query `logstash-wxcalling`
+- If "eu" is selected: query `logstash-wxcallingeuc1`
+- If both are selected: make 2 separate tool calls (one for each index)
 
 Use exact match on the `callId.keyword` field with the extracted Call-ID and filter for WxCAS service:
 

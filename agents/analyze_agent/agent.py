@@ -81,24 +81,25 @@ calling_agent = LlmAgent(
 
         ---
         ### 📡 HTTP Communication Flow 
-        Identify all HTTP communication across all endpoints and provide details like:
-        List interactions in bullet format:
-        /n
-        → **[Timestamp]**: METHOD request from [source endpoint] to [destination endpoint]
-        → **Payload or Status** (print concise information)
-        → **Outcome**: e.g. Successful feature retrieval, Call on hold, Call resumed, etc.
-        Dont print headers information
+        List all HTTP requests and responses in chronological order. Each entry should be ONE concise line:
+        
+        → **[Timestamp]** Client → Mobius: POST /v1/calling/sessions - 200 OK (Session creation)
+        → **[Timestamp]** Client → Mobius: GET /features (via CPAPI) - 200 OK
 
         ---
-        ### 📞 SIP Communication Flow 
-        Print the SIP communication following the below format. Correlate Mobius SIP and SSE/MSE SIP flows:
-        /n
-        → **[Timestamp]**: SIP message received from [source endpoint] to [destination endpoint]
-        → **Source Endpoint**: e.g. Mobius, SSE, WxCAS
-        → **Destination Endpoint**: e.g. Kamailio, MSE
-        → **Media**: SDP details if available 
-        → **Call ID and Status**: 200 OK, etc.  
-        → **Outcome**: e.g. "Call established", "Call rejected", etc.
+        ### 📞 SIP Communication Flow
+        List SIP messages in chronological order. Keep Mobius, SSE, MSE, and WxCAS as separate participants. Each entry should be ONE concise line:
+        
+        → **[Timestamp]** Client → Mobius: SIP message - CallID: xxx - Brief description
+        → **[Timestamp]** Mobius → SSE: SIP INVITE - CallID: xxx - HTTP to SIP conversion
+        → **[Timestamp]** SSE → MSE: Media setup - Media details
+        → **[Timestamp]** SSE → WxCAS: Call routing request - CallID: xxx
+        → **[Timestamp]** Client ↔ MSE: DTLS-SRTP handshake - Media established
+
+        ---
+        ### ✅ Final Outcome
+        Provide a single comprehensive summary of the entire flow (both HTTP and SIP):
+        Example: "Call successfully established. HTTP signaling: Client→Mobius (session created, features retrieved). SIP signaling: Client→Mobius→SSE→WxCAS (call routed). Media: Client↔MSE (DTLS-SRTP established)."
 
         ---
         ### ❗ Root Cause Analysis
@@ -191,24 +192,25 @@ contact_center_agent = LlmAgent(
 
         ---
         ### 📡 HTTP Communication Flow 
-        Identify all HTTP communication across all endpoints and provide details like:
-        List interactions in bullet format:
-        /n
-        → **[Timestamp]**: METHOD request from [source endpoint] to [destination endpoint]
-        → **Payload or Status** (print concise information)
-        → **Outcome**: e.g. Successful feature retrieval, Call on hold, Call resumed, etc.
-        Dont print headers information
+        List all HTTP requests and responses in chronological order. Each entry should be ONE concise line:
+        
+        → **[Timestamp]** Client → Mobius: POST /v1/calling/sessions - 200 OK (Session creation)
+        → **[Timestamp]** Client → Mobius: GET /features (via CPAPI) - 200 OK
 
         ---
-        ### 📞 SIP Communication Flow 
-        Print the SIP communication following the below format. Correlate Mobius SIP and SSE/MSE SIP flows:
-        /n
-        → **[Timestamp]**: SIP message received from [source endpoint] to [destination endpoint]
-        → **Source Endpoint**: e.g. Mobius, SSE, WxCAS
-        → **Destination Endpoint**: e.g. Kamailio, MSE
-        → **Media**: SDP details if available 
-        → **Call ID and Status**: 200 OK, etc.  
-        → **Outcome**: e.g. "Call established", "Call rejected", etc.
+        ### 📞 SIP Communication Flow
+        List SIP messages in chronological order. Keep Mobius, SSE, MSE, and Kamailio as separate participants. Each entry should be ONE concise line:
+        
+        → **[Timestamp]** Client → Mobius: SIP message - CallID: xxx - Brief description
+        → **[Timestamp]** Mobius → SSE: SIP INVITE - CallID: xxx - HTTP to SIP conversion
+        → **[Timestamp]** SSE → MSE: Media setup - Media details
+        → **[Timestamp]** SSE → Kamailio: SIP routing - CallID: xxx - Contact Center proxy
+        → **[Timestamp]** Client ↔ MSE: DTLS-SRTP handshake - Media established
+
+        ---
+        ### ✅ Final Outcome
+        Provide a single comprehensive summary of the entire flow (both HTTP and SIP):
+        Example: "Call successfully routed through Contact Center. HTTP signaling: Client→Mobius (session created, features retrieved). SIP signaling: Client→Mobius→SSE→Kamailio→Destination (call routed). Media: Client↔MSE (DTLS-SRTP established)."
 
         ---
         ### ❗ Root Cause Analysis

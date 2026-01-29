@@ -58,6 +58,12 @@ const SERVICES = [
   { value: "kamailio", label: "Kamailio"}
 ];
 
+const REGIONS = [
+  { value: "us", label: "US" },
+  { value: "eu", label: "EU" },
+  { value: "int", label: "INT" },
+];
+
 const LLMS = [
   { value: "gpt-4.1", label: "GPT-4.1" },
   // { value: "gemini", label: "Gemini" },
@@ -69,6 +75,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const [timeFilter, setTimeFilter] = useState("");
   const [llm, setLlm] = useState("gpt-4.1");
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
 
   const handleServiceChange = (service: string, checked: boolean) => {
     if (checked) {
@@ -78,6 +85,14 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
     }
   };
 
+  const handleRegionChange = (region: string, checked: boolean) => {
+    if (checked) {
+      setSelectedRegions((prev) => [...prev, region]);
+    } else {
+      setSelectedRegions((prev) => prev.filter((r) => r !== region));
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -86,6 +101,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
       searchValue: searchValue.trim(),
       searchField,
       services: selectedServices,
+      regions: selectedRegions,
       timeFilter,
     };
 
@@ -185,6 +201,33 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* Region Selector */}
+          <div className="space-y-2">
+            <Label className="text-black font-medium">Regions</Label>
+            <div className="grid grid-cols-3 gap-3 p-2 border border-gray-300 rounded-md">
+              {REGIONS.map((region) => (
+                <div
+                  key={region.value}
+                  className="flex items-center space-x-2"
+                >
+                  <Checkbox
+                    id={region.value}
+                    checked={selectedRegions.includes(region.value)}
+                    onCheckedChange={(checked: boolean) =>
+                      handleRegionChange(region.value, checked as boolean)
+                    }
+                  />
+                  <Label
+                    htmlFor={region.value}
+                    className="text-sm text-black cursor-pointer"
+                  >
+                    {region.label}
+                  </Label>
+                </div>
+              ))}
             </div>
           </div>
 
