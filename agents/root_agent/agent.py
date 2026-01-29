@@ -1,13 +1,11 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from google.adk.agents import SequentialAgent
 
-os.environ["AZURE_OPENAI_API_KEY"] = (
-    "MmYyZDUwODgtNGM1MC00MWU5LWFiOTMtMmE0MzRmMjZhMDU4NWM3YmExM2YtZjQ0_A52D_1eb65fdf-9643-417f-9974-ad72cae0e10f"
-)
-os.environ["AZURE_OPENAI_ENDPOINT"] = (
-    "https://llm-proxy.us-east-2.int.infra.intelligence.webex.com/azure/v1"
-)
-os.environ["AZURE_API_VERSION"] = "2024-10-21"
+# Load environment variables from agents/.env
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 from analyze_agent.agent import analyze_agent
 from search_agent.agent import search_agent

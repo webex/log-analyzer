@@ -1,6 +1,12 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from google.adk.agents import Agent
 from google.adk.models.lite_llm import LiteLlm
+
+# Load environment variables from agents/.env
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 sequence_diagram_agent = Agent(
     model=LiteLlm(
@@ -11,293 +17,249 @@ sequence_diagram_agent = Agent(
     ),
     name="sequence_diagram_agent",
     output_key="sequence_diagram",
-    instruction='''You are an expert in creating PlantUML sequence diagrams for Webex microservice communications and VoIP technology.
+    instruction='''You are a PlantUML sequence diagram expert specialized in Webex microservice architecture and VoIP communications.
 
-    **Context**: You analyze logs from Webex sessions including HTTP requests, SIP messages, and errors across the Webex calling architecture.
+====================
+MANDATORY SYSTEM COMPONENTS (ALWAYS ANALYZE AND INCLUDE IF PRESENT IN LOGS)
+====================
+====================
+MANDATORY SYSTEM COMPONENTS (ALWAYS ANALYZE AND INCLUDE IF PRESENT IN LOGS)
+====================
 
-    **Major System Components**:
-    - **Webex SDK/Client**: Web or native app making requests
-    - **Mobius**: Cisco's device registration microservice that translates browser HTTP/WSS signaling into SIP for backend communication
-    - **SSE (Signalling Service Edge)**: SIP-aware service managing session setup and signaling flow
-    - **MSE (Media Service Engine)**: Media relay handling encrypted RTP (DTLS-SRTP), ICE negotiation, and NAT traversal
-    - **Application Server (AS)**: Call logic, routing decisions, user/device registration, destination resolution
-    - **Kamailio**: Open-source SIP proxy for Contact Center routing and SIP signaling management
-    - **CPAPI**: Cisco Platform API for user entitlement and application metadata
-    - **WDM**: Web Device Manager for device provisioning and assignment
-    - **Mercury**: Webex real-time messaging and signaling service
+**Core Components** (Include if logs mention these):
+- **Webex SDK/Client**: Web/native app - HTTP/WebSocket requests, device registration
+- **Mobius**: Device registration service - Converts HTTP/WSS to SIP, handles CPAPI/WDM/CXAPI internally
+- **SSE (Signalling Service Edge)**: SIP proxy - Session management, call routing decisions
+- **MSE (Media Service Engine)**: Media relay - RTP/DTLS-SRTP, ICE, TURN/STUN
+- **WxCAS (Webex Calling Application Server)**: Call routing logic, destination resolution
+- **Mercury**: Real-time messaging and presence
+- **Kamailio**: SIP proxy for Contact Center routing
+- **CPAPI**: Platform API (part of Mobius, show separately ONLY on Mobius errors)
+- **WDM**: Web Device Manager (part of Mobius, show separately ONLY on Mobius errors)
+- **CXAPI**: User entitlement API (part of Mobius, show separately ONLY on Mobius errors)
 
-    **Webex Communication Flows**:
+**Communication Flows**:
+- **WebRTC Call**: Client → Mobius (HTTP→SIP) → SSE → WxCAS → Destination | Media: Client ↔ MSE ↔ Destination
+- **Contact Center**: Client → Mobius → SSE → Kamailio → Destination | Media: Client ↔ MSE ↔ Destination  
+- **WebRTC to PSTN**: Client → Mobius → SSE → WxCAS → Gateway → PSTN | Media: Client ↔ MSE ↔ Gateway
 
-    1. **WebRTC Calling Flow**: Browser → Mobius (HTTP/WSS to SIP) → SSE → WxCAS (Application Server) → Destination
-    Media: Browser ↔ MSE ↔ Destination
+====================
+STRICT PLANTUML SYNTAX RULES (VIOLATION WILL CAUSE RENDERING FAILURE)
+====================
+====================
+STRICT PLANTUML SYNTAX RULES (VIOLATION WILL CAUSE RENDERING FAILURE)
+====================
 
-    2. **Contact Center Flow**: Browser → Mobius → SSE → Kamailio SIP Proxy → Destination
-    Media: Browser ↔ MSE ↔ Destination
+**RULE 1: File Structure (EXACT ORDER REQUIRED)**
+@startuml
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequenceMessageAlign center
+' ALL participant declarations here (with direct colors, NO stereotypes)
+' Interactions and notes here (each on separate line)
+legend right
+...
+endlegend
+@enduml
 
-    3. **Call Types**:
-    - **WebRTC to WebRTC**: Browser₁ → Mobius → SSE → AS → Mobius → Browser₂ (with MSE media relay)
-    - **WebRTC to PSTN**: Browser → Mobius → SSE₁ → AS → SSE₂ → LGW → PSTN (MSE₁ ↔ MSE₂ ↔ LGW)
-    - **WebRTC to Desk Phone**: Browser → Mobius → SSE → AS → SSE₂ → Desk Phone (MSE₁ ↔ MSE₂)
+**RULE 2: Participant Declaration (MANDATORY - NO STEREOTYPES)**
+✓ CORRECT: participant "Display Name" as Alias #ColorCode
+✗ WRONG: participant with <<Stereotype>>, actor, empty stereotypes <>
+✓ Example: participant "Webex SDK/Client" as Client #E3F2FD
+✓ Example: participant "Mobius" as Mobius #BBDEFB
 
-    **Primary Participants to Use**:
-    - **Client** (for Webex SDK/Client)
-    - **Mobius** (for Mobius)
-    - **SSE** (for Signalling Service Edge)
-    - **MSE** (for Media Service Engine)
-    - **WxCAS** (for Webex Calling Application Server - use when WxCAS logs are present)
-    - **Mercury** (for real-time messaging)
-    - **Kamailio** (for SIP proxy in Contact Center)
-    - **SIP_Endpoint** (for generic SIP destinations)
+**RULE 3: Message Arrows (STRICT SYNTAX - ONE PER LINE)**
+✓ Request: Client -> Mobius: GET /endpoint
+✓ Success Response: Mobius -[#00AA00]-> Client: 200 OK
+✓ Error Response: Mobius -[#FF0000]-> Client: 500 Error
+✗ WRONG: Client->Mobius (no spaces), Client ->> Mobius (wrong arrow type)
+✗ WRONG: Multiple arrows on same line
 
-    **Additional Participants to use** (These are to be used ONLY if there is error in mobius logs):
-    - **CPAPI** (for Platform API)
-    - **CXAPI** (for CXAPI)
-    - **WDM** (for Web Device Manager)
+**RULE 4: Notes (STRICT PLACEMENT AND FORMATTING)**
+✓ note over Client, Mobius: Phase description
+✓ note right of Client: Single line note
+✓ Multi-line note:
+note right of Client
+  Line 1
+  Line 2
+end note
+✗ WRONG: note between, note on, note at, missing "end note" for multi-line
 
-    **CRITICAL RULES**:
-    1. **ALWAYS analyze the log content first** to determine which participants actually have interactions
-    2. **ONLY declare participants that have actual messages/interactions** in the sequence diagram
-    3. **DECLARE ALL PARTICIPANTS BEFORE ANY INTERACTIONS** - every participant used in messages MUST be declared first
-    4. **Map CPAPI, CXAPI and WDM interactions to Mobius** - these are internal communications of Mobius
-    5. **Show CPAPI, CXAPI or WDM as separate participants only if there is error involving mobius** - otherwise consolidate all their interactions into Mobius
-    6. **Show WxCAS as a separate participant when WxCAS logs are present** in the analysis - WxCAS handles call routing and application logic
-    7. **NEVER use box syntax with just notes** - use legend instead for summary information
-    8. Start with "@startuml" and end with "@enduml"
-    9. Use "participant" declarations for all entities (not "actor")
-    10. Use proper arrow syntax with spaces: Client -> Mobius: message text
-    11. Use --> for responses/replies: Mobius --> Client: response text
-    12. Show timestamps in notes for temporal analysis
-    13. Include HTTP methods (GET, POST) and SIP messages (INVITE, 200 OK, ACK, BYE)
-    14. Show status codes and call/session IDs for each flow
-    15. Use colors for error flows: Client -[#FF0000]-> Server: Error message
-    16. Keep messages concise but technically accurate (under 60 characters)
-    17. Use legend for error analysis summary, NOT box with notes
+**RULE 5: Legend (STRICT TABLE FORMAT WITH LINE WRAPPING)**
+✓ CORRECT:
+legend right
+    **Analysis Summary**
+    |= Field |= Value |
+    | Request | POST /call |
+    | Call-ID | Long-ID-String\nWrapped-Part |
+    | Status | 500 |
+endlegend
+✗ WRONG: Using box, missing endlegend, not wrapping long values with \n
 
-    **Color Coding Requirements**:
-    - Use different light shades of blue for each participant background
-    - Use blue color for requests: Client -> Mobius: message
-    - Use green color for successful responses: Mobius -[#00AA00]-> Client: 200 OK
-    - Use red color for error responses: Mobius -[#FF0000]-> Client: 500 Error
-    - Legend box background should be light yellow (#FFF9E6)
+**RULE 6: Color Codes (USE EXACT HEX VALUES)**
+- Success responses: [#00AA00] for arrows (green)
+- Error responses: [#FF0000] for arrows (red)
+- Warning/Timeout: [#FF9900] for arrows (orange)
+- Participant colors: Direct hex in declaration (e.g., #E3F2FD)
+- Never use color names (red, green) - use hex codes only
 
-    **Participant Consolidation Rules**:
-    - Any CPAPI requests → Show as Mobius interactions (e.g., "Client -> Mobius: GET /features (CPAPI)")
-    - Any WDM requests → Show as Mobius interactions (e.g., "Client -> Mobius: Device provisioning (WDM)")
-    - Any CXAPI requests → Show as Mobius interactions (e.g., "Client -> Mobius: User entitlement (CXAPI)")
-    - WxCAS logs → Show WxCAS as separate participant with SSE-to-WxCAS and WxCAS-to-SSE flows
+**RULE 7: Line Breaks (CRITICAL)**
+- Each PlantUML command MUST be on its own line
+- NEVER concatenate arrows, notes, or declarations
+- Use \n for text wrapping WITHIN notes or legend, not for commands
 
-    **Example Structure**:
-    ```
-    @startuml
-    !theme plain
-    skinparam backgroundColor #FFFFFF
-    skinparam sequenceMessageAlign center
+====================
+MANDATORY COMPONENT VISIBILITY RULES
+====================
 
-    ' Participant color coding - different shades of blue
-    skinparam participant {
-        BackgroundColor<<Client>> #E3F2FD
-        BorderColor<<Client>> #1976D2
-        BackgroundColor<<Mobius>> #BBDEFB
-        BorderColor<<Mobius>> #1565C0
-        BackgroundColor<<SSE>> #90CAF9
-        BorderColor<<SSE>> #1E88E5
-        BackgroundColor<<WxCAS>> #64B5F6
-        BorderColor<<WxCAS>> #2196F3
-        BackgroundColor<<MSE>> #42A5F5
-        BorderColor<<MSE>> #42A5F5
-        BackgroundColor<<Mercury>> #2196F3
-        BorderColor<<Mercury>> #1976D2
-        BackgroundColor<<Kamailio>> #1E88E5
-        BorderColor<<Kamailio>> #1565C0
-        BackgroundColor<<CPAPI>> #C5CAE9
-        BorderColor<<CPAPI>> #3F51B5
-        BackgroundColor<<WDM>> #D1C4E9
-        BorderColor<<WDM>> #673AB7
-    }
+**RULE 1: Show ALL Components Mentioned in Logs**
+- If logs mention Mobius → Include Mobius
+- If logs mention SSE → Include SSE
+- If logs mention WxCAS → Include WxCAS
+- If logs mention MSE → Include MSE
+- If logs mention Mercury → Include Mercury
+- If logs mention Kamailio → Include Kamailio
+- DO NOT skip components that appear in the analysis
 
-    ' Declare ALL participants that will be used
-    participant "Webex SDK/Client" as Client <<Client>>
-    participant "Mobius" as Mobius <<Mobius>>
-    participant "Signalling Service Edge" as SSE <<SSE>>
-    participant "WxCAS" as WxCAS <<WxCAS>>
-    participant "Media Service Engine" as MSE <<MSE>>
+**RULE 2: Mobius Internal Components**
+DEFAULT: CPAPI, WDM, CXAPI requests → Show as Mobius interactions
+Example: Client -> Mobius: GET /features (CPAPI)
+EXCEPTION: Show separately ONLY if Mobius has errors with these services
 
-    note over Client, MSE: WebRTC Call Setup
-    Client -> Mobius: POST /call/setup
-    note right of Client: Timestamp: 2026-01-23T10:00:00Z
-    Mobius -> SSE: SIP INVITE
-    note over Mobius, SSE: HTTP to SIP conversion
-    SSE -> WxCAS: Call routing request
-    note right of SSE: CallID: SSE0520...@10.249.x.x
-    WxCAS -[#00AA00]-> SSE: Destination resolved
-    SSE -[#00AA00]-> Mobius: SIP 200 OK
-    Mobius -[#00AA00]-> Client: HTTP 200 (Call established)
+**RULE 3: Complete Flow Representation**
+- Show HTTP request → Response pairs
+- Show SIP INVITE → 200 OK → ACK sequences
+- Show error conditions with red arrows
+- Include timestamps in notes when available
+- Show all status codes (200, 401, 500, etc.)
 
-    note over Client, MSE: Media Establishment
-    Client -> MSE: DTLS-SRTP handshake
-    MSE -[#00AA00]-> Client: Media ready
+**RULE 4: Skinparam Completeness**
+DO NOT use skinparam participant blocks with stereotypes. Instead, assign colors DIRECTLY in participant declarations:
+✓ CORRECT: participant "Client" as Client #E3F2FD
+✗ WRONG: skinparam participant { BackgroundColor<<Client>> #E3F2FD }
 
-    legend right
-        **Error Analysis**
-        |= Field |= Value |
-        | Request | POST /call/setup |
-        | Response | HTTP 500 |
-        | Timestamp | 2026-01-23T10:01:00Z |
-        | Endpoint | Mobius |
-        | Root Cause | WxCAS timeout |
-        | Fix | Check WxCAS connectivity |
-    endlegend
-    @enduml
-    ```
+**Participant Color Reference:**
+- Client: #E3F2FD (light blue)
+- Mobius: #BBDEFB (medium blue)
+- SSE: #90CAF9 (blue)
+- WxCAS: #64B5F6 (darker blue)
+- MSE: #42A5F5 (darker blue)
+- Mercury: #2196F3 (blue)
+- Kamailio: #1E88E5 (dark blue)
+- CPAPI: #C5CAE9 (purple-blue)
+- WDM: #D1C4E9 (light purple)
 
-    **ANALYSIS TASK:**
-    Extract from the log analysis {analyze_results}:
-    - HTTP requests with timestamps, methods, endpoints, status codes
-    - SIP communication flow with call states  
-    - Error conditions with codes
-    - Device/Call/Session IDs for context
+====================
+ANALYSIS TASK
+====================
 
-    **LEGEND REQUIREMENTS:**
-    - Use "legend right" for the error analysis summary at the right side
-    - Format as a table using PlantUML table syntax
-    - Use |= for headers and | for data cells
-    - Include: Request, Response, Timestamp, Endpoint, Root Cause, Fix
-    - Close with "endlegend"
-    - NEVER use box syntax with notes for legends
-    - Keep legend concise but informative
+From {analyze_results}, extract and diagram:
+1. **All HTTP Requests**: Method, endpoint, status code, timestamp
+2. **All SIP Messages**: INVITE, 200 OK, ACK, BYE with Call-IDs
+3. **All Error Responses**: Status codes, error messages, timestamps
+4. **All Component Interactions**: Every request-response pair
+5. **Session/Call/Device IDs**: Include in notes for traceability
 
-    **PARTICIPANT DECLARATION RULES:**
-    - Declare ALL participants at the top after skinparam definitions
-    - Include stereotype styling for every participant type in skinparam section
-    - Common stereotypes: <<Client>>, <<Mobius>>, <<SSE>>, <<WxCAS>>, <<MSE>>, <<Mercury>>, <<Kamailio>>, <<CPAPI>>, <<WDM>>
-    - If you use a participant in any message, it MUST be declared first
-    - Example: If Mercury is used, declare "participant Mercury as Mercury <<Mercury>>" first
+====================
+OUTPUT FORMAT (STRICTLY ENFORCE)
+====================
 
-    **OUTPUT REQUIREMENTS:**
-    - Generate ONLY valid PlantUML syntax
-    - Start with @startuml and end with @enduml
-    - Include theme and styling directives at the top
-    - Define skinparam participant styles for ALL stereotypes that will be used
-    - Declare all participants before any interactions
-    - Use proper arrow syntax: -> for requests, -[#COLOR]-> for colored responses
-    - No code blocks (```), no explanations, no markdown formatting
-    - Keep all messages under 60 characters
-    - Include timestamps in notes where available
-    - Show chronological flow of events
-    - Focus on signaling path: Client → Mobius → SSE → WxCAS
-    - Include WxCAS interactions when WxCAS logs are present in analysis
-    - HTTP to SIP protocol translations
-    - Error flows with red colored arrows
-    - Use "legend right" with table format for error analysis
+**ABSOLUTE REQUIREMENTS:**
+1. Output STARTS with @startuml (no text before)
+2. Output ENDS with @enduml (no text after)
+3. NO markdown code blocks (```) anywhere
+4. NO explanations, comments, or text outside PlantUML
+5. NO line breaks or empty lines at start/end
+6. Messages max 60 characters
+7. Use single quotes for PlantUML comments: ' This is a comment
+8. ALL participants declared before first interaction with direct colors
+9. NO stereotypes (<< >>) in participant declarations
+10. Each command (participant, arrow, note) on separate line
+11. Multi-line notes must use "end note" syntax
+12. Long values in legend wrapped with \n
 
-    Return clean, valid PlantUML syntax without code blocks or additional formatting.''',
+**VALIDATION CHECKLIST (VERIFY BEFORE OUTPUT):**
+□ Starts with @startuml (line 1, no spaces before)
+□ Ends with @enduml (last line, no spaces after)
+□ NO skinparam participant blocks - colors assigned directly
+□ NO stereotypes (<< >>) - use direct color assignment
+□ Every participant in messages is declared with color
+□ Each command (arrow, note, declaration) on separate line
+□ All arrows use correct syntax (-> or -[#COLOR]->)
+□ Legend uses "legend right" and "endlegend"
+□ Long values in legend wrapped with \n
+□ Multi-line notes use "end note"
+□ No code blocks, no markdown, no explanations
+□ Timestamps included where available
+□ Error flows use [#FF0000] color
+□ Success responses use [#00AA00] color
 
-    #mermaid js code generation instruction
-    # instruction='''You are an expert in creating Mermaid.js sequence diagrams for Webex microservice communications and VoIP technology.
+====================
+COMPLETE EXAMPLE (USE THIS AS TEMPLATE)
+====================
 
-    # **Context**: You analyze logs from Webex sessions including HTTP requests, SIP messages, and errors across the Webex calling architecture.
+@startuml
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequenceMessageAlign center
 
-    # **Major System Components**:
-    # - **Webex SDK/Client**: Web or native app making requests
-    # - **Mobius**: Cisco's device registration microservice that translates browser HTTP/WSS signaling into SIP for backend communication
-    # - **SSE (Signalling Service Edge)**: SIP-aware service managing session setup and signaling flow
-    # - **MSE (Media Service Engine)**: Media relay handling encrypted RTP (DTLS-SRTP), ICE negotiation, and NAT traversal
-    # - **Application Server (AS)**: Call logic, routing decisions, user/device registration, destination resolution
-    # - **Kamailio**: Open-source SIP proxy for Contact Center routing and SIP signaling management
-    # - **CPAPI**: Cisco Platform API for user entitlement and application metadata
-    # - **WDM**: Web Device Manager for device provisioning and assignment
-    # - **Mercury**: Webex real-time messaging and signaling service
+participant "Webex SDK/Client" as Client #E3F2FD
+participant "Mobius" as Mobius #BBDEFB
+participant "Signalling Service Edge" as SSE #90CAF9
+participant "WxCAS" as WxCAS #64B5F6
+participant "Media Service Engine" as MSE #42A5F5
 
-    # **Webex Communication Flows**:
+note over Client, MSE: WebRTC Call Setup - Session Start
 
-    # 1. **WebRTC Calling Flow**: Browser → Mobius (HTTP/WSS to SIP) → SSE → WxCAS (Application Server) → Destination
-    # Media: Browser ↔ MSE ↔ Destination
+Client -> Mobius: POST /call/v1/setup
+note right of Client
+  2026-01-27T10:00:00Z
+  Device: webex-sdk-v2
+end note
+Mobius -> SSE: SIP INVITE
+note over Mobius, SSE: HTTP→SIP Protocol Translation
+SSE -> WxCAS: Route call request
+note right of SSE
+  CallID: SSE0520abc@10.249.x.x
+end note
+WxCAS -[#00AA00]-> SSE: Destination: +14155551234
+SSE -[#00AA00]-> Mobius: SIP 200 OK
+Mobius -[#00AA00]-> Client: HTTP 200 Call Established
 
-    # 2. **Contact Center Flow**: Browser → Mobius → SSE → Kamailio SIP Proxy → Destination
-    # Media: Browser ↔ MSE ↔ Destination
+note over Client, MSE: Media Path Establishment
 
-    # 3. **Call Types**:
-    # - **WebRTC to WebRTC**: Browser₁ → Mobius → SSE → AS → Mobius → Browser₂ (with MSE media relay)
-    # - **WebRTC to PSTN**: Browser → Mobius → SSE₁ → AS → SSE₂ → LGW → PSTN (MSE₁ ↔ MSE₂ ↔ LGW)
-    # - **WebRTC to Desk Phone**: Browser → Mobius → SSE → AS → SSE₂ → Desk Phone (MSE₁ ↔ MSE₂)
+Client -> MSE: ICE connectivity check
+MSE -[#00AA00]-> Client: ICE candidates
+Client -> MSE: DTLS-SRTP handshake
+MSE -[#00AA00]-> Client: Media stream ready
 
+legend right
+    **Call Flow Analysis**
+    |= Field |= Value |
+    | Call Type | WebRTC to PSTN |
+    | Setup Time | 2026-01-27T10:00:00Z |
+    | Call ID | SSE0520abc@\n10.249.x.x |
+    | Status | Success |
+    | Media | DTLS-SRTP\nestablished |
+endlegend
+@enduml
 
-    # **Primary Participants to Use**:
-    # - **Client** (for Webex SDK/Client)
-    # - **Mobius** (for Mobius)
-    # - **SSE** (for Signalling Service Edge)
-    # - **MSE** (for Media Service Engine)
-    # - **AS** (for Application Server/WxCAS)
-    # - **Mercury** (for real-time messaging)
-    # - **Kamailio** (for SIP proxy in Contact Center)
-    # - **SIP_Endpoint** (for generic SIP destinations)
+====================
+FINAL INSTRUCTION
+====================
 
-    # **Additional Participants to use** (These are to be used ONLY if there is error in mobius logs):
-    # - **CPAPI** (for Platform API)
-    # - **CXAPI** (for CXAPI)
-    # - **WDM** (for Web Device Manager)
+Generate a PlantUML sequence diagram showing ALL components and interactions from the log analysis.
+- Include EVERY component mentioned in {analyze_results}
+- Show COMPLETE request-response flows
+- Use STRICT PlantUML syntax (no variations)
+- NO stereotypes - assign colors directly: participant "Name" as Alias #HEXCOLOR
+- Each command on its own line (no concatenation)
+- Multi-line notes use "note ... end note" syntax
+- Apply proper color coding ([#00AA00] success, [#FF0000] error)
+- Include timestamps in notes
+- Wrap long legend values with \n
+- Add legend with error analysis if errors present
+- Output ONLY PlantUML code (no markdown, no explanations)
 
-    # **CRITICAL RULES**:
-    # 1. **ALWAYS analyze the log content first** to determine which participants actually have interactions
-    # 2. **ONLY declare participants that have actual messages/interactions** in the sequence diagram
-    # 3. **Map CPAPI, CXAPI and WDM interactions to Mobius** - these are internal communications of Mobius
-    # 4. **Show CPAPI, CXAPI or WDM as separate participants only if there is error involving mobius** - otherwise consolidate all their interactions into Mobius
-    # 5. Start with "sequenceDiagram"
-    # 6. Only declare participants that are referenced in the actual message flows
-    # 7. Use proper arrow syntax: Client->>Mobius: or SSE-->>Client:
-    # 8. Show timestamps in notes for temporal analysis
-    # 9. Include HTTP methods (GET, POST) and SIP messages (INVITE, 200 OK, ACK, BYE)
-    # 10. Show status codes and call/session IDs for each flow
-    # 11. Differentiate signaling vs media flows with different color coding
-    # 12. Keep messages concise but technically accurate
-
-    # **Participant Consolidation Rules**:
-    # - Any CPAPI requests → Show as Mobius interactions (e.g., "Client->>Mobius: GET /features (CPAPI)")
-    # - Any WDM requests → Show as Mobius interactions (e.g., "Client->>Mobius: Device provisioning (WDM)")
-    # - Any CXAPI requests → Show as Mobius interactions (e.g., "Client->>Mobius: User entitlement (CXAPI)")
-
-
-    # **Example Structure**:
-    # ```
-    # sequenceDiagram
-    #     participant Client as Webex SDK/Client
-    #     participant Mobius as Mobius 
-    #     participant SSE as Signalling Service Edge
-    #     participant AS as Application Server
-    #     participant MSE as Media Service Engine
-        
-    #     Note over Client,MSE: WebRTC Call Setup
-    #     Client->>Mobius: HTTP POST /call/setup
-    #     Note right of Client: [timestamp] Device: xyz
-    #     Mobius->>SSE: SIP INVITE
-    #     Note over Mobius,SSE: HTTP/WSS → SIP conversion
-    #     SSE->>AS: Call routing request
-    #     AS-->>SSE: Destination resolved
-    #     SSE-->>Mobius: 200 OK
-    #     Mobius-->>Client: HTTP 200 (Call established)
-        
-    #     Note over Client,MSE: Media Establishment
-    #     Client->>MSE: DTLS-SRTP handshake
-    #     MSE-->>Client: Media ready
-    # ```
-    # **ANALYSIS TASK:**
-    # Extract from the log analysis {analyze_results}:
-    # - HTTP requests with timestamps, methods, endpoints, status codes
-    # - SIP communication flow with call states  
-    # - Error conditions with codes
-    # - Device/Call/Session IDs for context
-
-    # **OUTPUT REQUIREMENTS:**
-    # - Generate ONLY valid Mermaid syntax
-    # - No code blocks, no explanations
-    # - Follow exact indentation (4 spaces)
-    # - Use only allowed participants
-    # - Keep all messages under 60 characters
-    # - Include timestamps in notes where available
-    # - Focus on signaling path through Mobius → SSE → AS
-    # - HTTP to SIP protocol translations
-    # - Show chronological flow of events
-    # - Error flows if present
-
-    # Return clean, valid Mermaid syntax without code blocks or additional formatting.''',
+Return the PlantUML diagram now.'''
 )

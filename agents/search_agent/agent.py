@@ -1,5 +1,7 @@
 import os
 import shutil
+from pathlib import Path
+from dotenv import load_dotenv
 from google.adk.agents import LlmAgent, SequentialAgent
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools.mcp_tool.mcp_toolset import (
@@ -8,7 +10,23 @@ from google.adk.tools.mcp_tool.mcp_toolset import (
     StdioConnectionParams,
 )
 
+# Load environment variables from agents/.env
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
 UV_PATH = "/opt/homebrew/bin/uv"
+
+# Region to Index Mappings
+REGION_INDEX_MAPPING = {
+    "wxm_app": {
+        "us": "logstash-wxm-app",
+        "eu": "logstash-wxm-app-eu1"
+    },
+    "wxcalling": {
+        "us": "logstash-wxcalling",
+        "eu": "logstash-wxcallingeuc1"
+    }
+}
 
 # Agent 1: Search Mobius logs in wxm-app indexes
 wxm_search_agent = LlmAgent(
@@ -25,8 +43,7 @@ You are the Mobius Log Search Agent. Your job is to search for Mobius microservi
 
 **1. Core Task:**
 Search the appropriate `logstash-wxm-app` indexes based on the selected regions:
-- US region: `logstash-wxm-app`
-- EU region: `logstash-wxm-app-eu1`
+""" + '\n'.join(f'- {region.upper()} region: `{index}`' for region, index in REGION_INDEX_MAPPING['wxm_app'].items()) + """
 
 Check the user's region selection and ONLY search the indexes for the selected regions.
 
@@ -133,7 +150,7 @@ Session ID search (search in both local and remote):
                     command=UV_PATH,
                     args=[
                         "--directory",
-                        "/Users/pkesari/Desktop/WorkProjects/microservice-log-analyzer/opensearch-mcp-server-py",
+                        os.environ["OPENSEARCH_MCP_SERVER_PATH"],
                         "run",
                         "--",
                         "python",
@@ -141,14 +158,14 @@ Session ID search (search in both local and remote):
                         "mcp_server_opensearch",
                     ],
                     env={
-                        "OPENSEARCH_OAUTH_TOKEN": "ZTViYjE2ZTMtNGE0OS00YzJhLThiMTItYWY4YTA2NDIyOTJmNmNkNjE5N2UtZmEz_PF84_6078fba4-49d9-4291-9f7b-80116aab6974",
-                        "OPENSEARCH_OAUTH_NAME": "MicroserviceLogAnalyzer",
-                        "OPENSEARCH_OAUTH_PASSWORD": "QBLP.qsxh.16.VIKL.cdwz.38.CZKP.rtwm.3467",
-                        "OPENSEARCH_OAUTH_CLIENT_ID": "C652d21a85854402b5bd7b2207ef96575e47bbb5c168008eeaba51ec7d8e37e93",
-                        "OPENSEARCH_OAUTH_CLIENT_SECRET": "84ec522d2e99bdf8ac2386c44210f1e921f7cab0f65db734f27798ea43545788",
-                        "OPENSEARCH_OAUTH_SCOPE": "lma-logging:serviceowners_read lma-logging:wxcalling_read",
-                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": "https://idbroker.webex.com/idb/token/6078fba4-49d9-4291-9f7b-80116aab6974/v2/actions/GetBearerToken/invoke",
-                        "OPENSEARCH_OAUTH_TOKEN_URL": "https://idbroker.webex.com/idb/oauth2/v1/access_token",
+                        "OPENSEARCH_OAUTH_TOKEN": os.environ["OPENSEARCH_OAUTH_TOKEN"],
+                        "OPENSEARCH_OAUTH_NAME": os.environ["OPENSEARCH_OAUTH_NAME"],
+                        "OPENSEARCH_OAUTH_PASSWORD": os.environ["OPENSEARCH_OAUTH_PASSWORD"],
+                        "OPENSEARCH_OAUTH_CLIENT_ID": os.environ["OPENSEARCH_OAUTH_CLIENT_ID"],
+                        "OPENSEARCH_OAUTH_CLIENT_SECRET": os.environ["OPENSEARCH_OAUTH_CLIENT_SECRET"],
+                        "OPENSEARCH_OAUTH_SCOPE": os.environ["OPENSEARCH_OAUTH_SCOPE"],
+                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_BEARER_TOKEN_URL"],
+                        "OPENSEARCH_OAUTH_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_TOKEN_URL"],
                     },
                 ),
             ),
@@ -222,8 +239,7 @@ You are the SSE/MSE Log Search Agent. Your job is to search for SSE and MSE micr
 
 **1. Core Task:**
 Search the appropriate `logstash-wxcalling` indexes based on the selected regions:
-- US region: `logstash-wxcalling`
-- EU region: `logstash-wxcallingeuc1`
+""" + '\n'.join(f'- {region.upper()} region: `{index}`' for region, index in REGION_INDEX_MAPPING['wxcalling'].items()) + """
 
 Check the user's region selection and ONLY search the indexes for the selected regions.
 
@@ -284,7 +300,7 @@ Display: "Found X SSE/MSE logs. Preparing comprehensive analysis..."
                     command=UV_PATH,
                     args=[
                         "--directory",
-                        "/Users/pkesari/Desktop/WorkProjects/microservice-log-analyzer/opensearch-mcp-server-py",
+                        os.environ["OPENSEARCH_MCP_SERVER_PATH"],
                         "run",
                         "--",
                         "python",
@@ -292,14 +308,14 @@ Display: "Found X SSE/MSE logs. Preparing comprehensive analysis..."
                         "mcp_server_opensearch",
                     ],
                     env={
-                        "OPENSEARCH_OAUTH_TOKEN": "ZTViYjE2ZTMtNGE0OS00YzJhLThiMTItYWY4YTA2NDIyOTJmNmNkNjE5N2UtZmEz_PF84_6078fba4-49d9-4291-9f7b-80116aab6974",
-                        "OPENSEARCH_OAUTH_NAME": "MicroserviceLogAnalyzer",
-                        "OPENSEARCH_OAUTH_PASSWORD": "QBLP.qsxh.16.VIKL.cdwz.38.CZKP.rtwm.3467",
-                        "OPENSEARCH_OAUTH_CLIENT_ID": "C652d21a85854402b5bd7b2207ef96575e47bbb5c168008eeaba51ec7d8e37e93",
-                        "OPENSEARCH_OAUTH_CLIENT_SECRET": "84ec522d2e99bdf8ac2386c44210f1e921f7cab0f65db734f27798ea43545788",
-                        "OPENSEARCH_OAUTH_SCOPE": "lma-logging:serviceowners_read lma-logging:wxcalling_read",
-                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": "https://idbroker.webex.com/idb/token/6078fba4-49d9-4291-9f7b-80116aab6974/v2/actions/GetBearerToken/invoke",
-                        "OPENSEARCH_OAUTH_TOKEN_URL": "https://idbroker.webex.com/idb/oauth2/v1/access_token",
+                        "OPENSEARCH_OAUTH_TOKEN": os.environ["OPENSEARCH_OAUTH_TOKEN"],
+                        "OPENSEARCH_OAUTH_NAME": os.environ["OPENSEARCH_OAUTH_NAME"],
+                        "OPENSEARCH_OAUTH_PASSWORD": os.environ["OPENSEARCH_OAUTH_PASSWORD"],
+                        "OPENSEARCH_OAUTH_CLIENT_ID": os.environ["OPENSEARCH_OAUTH_CLIENT_ID"],
+                        "OPENSEARCH_OAUTH_CLIENT_SECRET": os.environ["OPENSEARCH_OAUTH_CLIENT_SECRET"],
+                        "OPENSEARCH_OAUTH_SCOPE": os.environ["OPENSEARCH_OAUTH_SCOPE"],
+                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_BEARER_TOKEN_URL"],
+                        "OPENSEARCH_OAUTH_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_TOKEN_URL"],
                     },
                 ),
             ),
@@ -376,8 +392,7 @@ You are the WxCAS Log Search Agent. Your job is to search for WxCAS (Webex Calli
 
 **1. Core Task:**
 Search the appropriate `logstash-wxcalling` indexes based on the selected regions:
-- US region: `logstash-wxcalling`
-- EU region: `logstash-wxcallingeuc1`
+""" + '\n'.join(f'- {region.upper()} region: `{index}`' for region, index in REGION_INDEX_MAPPING['wxcalling'].items()) + """
 
 Check the user's region selection and ONLY search the indexes for the selected regions.
 
@@ -429,7 +444,7 @@ Display: "Found X WxCAS logs. Preparing comprehensive analysis..."
                     command=UV_PATH,
                     args=[
                         "--directory",
-                        "/Users/pkesari/Desktop/WorkProjects/microservice-log-analyzer/opensearch-mcp-server-py",
+                        os.environ["OPENSEARCH_MCP_SERVER_PATH"],
                         "run",
                         "--",
                         "python",
@@ -437,14 +452,14 @@ Display: "Found X WxCAS logs. Preparing comprehensive analysis..."
                         "mcp_server_opensearch",
                     ],
                     env={
-                        "OPENSEARCH_OAUTH_TOKEN": "ZTViYjE2ZTMtNGE0OS00YzJhLThiMTItYWY4YTA2NDIyOTJmNmNkNjE5N2UtZmEz_PF84_6078fba4-49d9-4291-9f7b-80116aab6974",
-                        "OPENSEARCH_OAUTH_NAME": "MicroserviceLogAnalyzer",
-                        "OPENSEARCH_OAUTH_PASSWORD": "QBLP.qsxh.16.VIKL.cdwz.38.CZKP.rtwm.3467",
-                        "OPENSEARCH_OAUTH_CLIENT_ID": "C652d21a85854402b5bd7b2207ef96575e47bbb5c168008eeaba51ec7d8e37e93",
-                        "OPENSEARCH_OAUTH_CLIENT_SECRET": "84ec522d2e99bdf8ac2386c44210f1e921f7cab0f65db734f27798ea43545788",
-                        "OPENSEARCH_OAUTH_SCOPE": "lma-logging:serviceowners_read lma-logging:wxcalling_read",
-                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": "https://idbroker.webex.com/idb/token/6078fba4-49d9-4291-9f7b-80116aab6974/v2/actions/GetBearerToken/invoke",
-                        "OPENSEARCH_OAUTH_TOKEN_URL": "https://idbroker.webex.com/idb/oauth2/v1/access_token",
+                        "OPENSEARCH_OAUTH_TOKEN": os.environ["OPENSEARCH_OAUTH_TOKEN"],
+                        "OPENSEARCH_OAUTH_NAME": os.environ["OPENSEARCH_OAUTH_NAME"],
+                        "OPENSEARCH_OAUTH_PASSWORD": os.environ["OPENSEARCH_OAUTH_PASSWORD"],
+                        "OPENSEARCH_OAUTH_CLIENT_ID": os.environ["OPENSEARCH_OAUTH_CLIENT_ID"],
+                        "OPENSEARCH_OAUTH_CLIENT_SECRET": os.environ["OPENSEARCH_OAUTH_CLIENT_SECRET"],
+                        "OPENSEARCH_OAUTH_SCOPE": os.environ["OPENSEARCH_OAUTH_SCOPE"],
+                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_BEARER_TOKEN_URL"],
+                        "OPENSEARCH_OAUTH_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_TOKEN_URL"],
                     },
                 ),
             ),

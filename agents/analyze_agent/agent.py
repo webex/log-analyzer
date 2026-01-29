@@ -1,6 +1,12 @@
-import os  
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
+
+# Load environment variables from agents/.env
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # Sub-agent
 calling_agent = LlmAgent(
