@@ -11,8 +11,9 @@ interface ResultsTabsProps {
 }
 
 export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps) {
+  console.log("ResultsTabs received mermaidCode:", mermaidCode); // Debug log
+  
   return (
-    console.log("ResultsTabs received mermaidCode:", mermaidCode), // Debug log
     <div className="w-full h-full overflow-hidden">
       <Tabs defaultValue="analysis" className="h-full">
       <TabsList className="grid w-full grid-cols-3 bg-gray-100">

@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=env_path)
 # Sub-agent
 calling_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-4.1",
+        model="azure/gpt-5.2",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],
@@ -123,7 +123,7 @@ calling_agent = LlmAgent(
 # Sub-agent
 contact_center_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-4.1",
+        model="azure/gpt-5.2",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],
@@ -237,7 +237,7 @@ analyze_agent = LlmAgent(
     name="analyze_agent",
     output_key="analyze_results",
     model=LiteLlm(
-        model="azure/gpt-4.1",
+        model="azure/gpt-5.2",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],

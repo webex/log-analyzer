@@ -14,7 +14,7 @@ from google.adk.tools.mcp_tool.mcp_toolset import (
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-UV_PATH = "/opt/homebrew/bin/uv"
+UV_PATH = "/Users/sarangsa/.local/bin/uv"
 
 # Region to Index Mappings
 REGION_INDEX_MAPPING = {
@@ -31,7 +31,7 @@ REGION_INDEX_MAPPING = {
 # Agent 1: Search Mobius logs in wxm-app indexes
 wxm_search_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-4.1",
+        model="azure/gpt-5.2",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],
@@ -177,7 +177,7 @@ Session ID search (search in both local and remote):
 # Agent 2: Extract session ID from Mobius logs
 session_extractor_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-4.1",
+        model="azure/gpt-5.2",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],
@@ -227,7 +227,7 @@ EXTRACTED_SESSION_ID: NONE
 # Agent 3: Search SSE/MSE logs in wxcalling indexes
 wxcalling_search_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-4.1",
+        model="azure/gpt-5.2",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],
@@ -327,7 +327,7 @@ Display: "Found X SSE/MSE logs. Preparing comprehensive analysis..."
 # Agent 4: Extract SSE Call-ID from SSE/MSE logs
 sse_callid_extractor_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-4.1",
+        model="azure/gpt-5.2",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],
@@ -380,7 +380,7 @@ EXTRACTED_SSE_CALLID: NONE
 # Agent 5: Search WxCAS logs in wxcalling indexes
 wxcas_search_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-4.1",
+        model="azure/gpt-5.2",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_version=os.environ["AZURE_API_VERSION"],

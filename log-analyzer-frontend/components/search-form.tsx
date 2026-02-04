@@ -55,7 +55,7 @@ const SERVICES = [
   { value: "mercury", label: "Mercury" },
   { value: "sse", label: "SSE" },
   { value: "mse", label: "MSE" },
-  { value: "kamailio", label: "Kamailio"}
+  { value: "kamailio", label: "Kamailio" }
 ];
 
 const REGIONS = [
@@ -65,7 +65,7 @@ const REGIONS = [
 ];
 
 const LLMS = [
-  { value: "gpt-4.1", label: "GPT-4.1" },
+  { value: "gpt-5.2", label: "GPT-4.1" },
   // { value: "gemini", label: "Gemini" },
 ];
 
@@ -73,7 +73,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const [searchValue, setSearchValue] = useState("");
   const [searchField, setSearchField] = useState("");
   const [timeFilter, setTimeFilter] = useState("");
-  const [llm, setLlm] = useState("gpt-4.1");
+  const [llm, setLlm] = useState("gpt-5.2");
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
 

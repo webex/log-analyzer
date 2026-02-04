@@ -22,15 +22,13 @@ export class SessionManager {
       const response = await fetch(
         `${ADK_API_URL}/apps/root_agent/users/${this.userId}/sessions/${this.sessionId}`,
         {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
-            state: {
-              initialized: true,
-              timestamp: new Date().toISOString(),
-            },
+            initialized: true,
+            timestamp: new Date().toISOString(),
           }),
           signal: controller.signal,
         }

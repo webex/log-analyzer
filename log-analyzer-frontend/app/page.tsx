@@ -42,7 +42,7 @@ export default function HomePage() {
               const hits = JSON.parse(
                 part.functionResponse?.response?.content?.[0]?.text || "{}"
               )?.hits?.hits;
-              if (hits) logs.push(...hits);
+              if (hits && hits.length > 0) logs.push(...hits);
             } catch (error) {
               console.error("Failed to parse log entry:", error);
             }
