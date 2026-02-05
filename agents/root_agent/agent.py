@@ -9,9 +9,9 @@ env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 
-from oauth_manager import get_token_manager
+from oauth_manager import get_token_manager_machine
 
-oauth_manager = get_token_manager()
+oauth_manager = get_token_manager_machine()
 oauth_manager.initialize()
 logging.info("✓ OAuth token initialized and refresh loop started")
 
