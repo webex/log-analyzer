@@ -61,7 +61,11 @@ const SERVICES = [
 const REGIONS = [
   { value: "us", label: "US" },
   { value: "eu", label: "EU" },
-  { value: "int", label: "INT" },
+];
+
+const ENVIRONMENTS = [
+  { value: "prod", label: "Production" },
+  { value: "int", label: "Integration" },
 ];
 
 const LLMS = [
@@ -76,6 +80,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const [llm, setLlm] = useState("gpt-5.2");
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>([]);
 
   const handleServiceChange = (service: string, checked: boolean) => {
     if (checked) {
@@ -93,6 +98,14 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
     }
   }
 
+  const handleEnvironmentChange = (environment: string, checked: boolean) => {
+    if (checked) {
+      setSelectedEnvironments((prev) => [...prev, environment]);
+    } else {
+      setSelectedEnvironments((prev) => prev.filter((e) => e !== environment));
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -102,6 +115,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
       searchField,
       services: selectedServices,
       regions: selectedRegions,
+      environments: selectedEnvironments,
       timeFilter,
     };
 
@@ -204,10 +218,37 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
             </div>
           </div>
 
+          {/* Environment Selector */}
+          <div className="space-y-2">
+            <Label className="text-black font-medium">Environments</Label>
+            <div className="grid grid-cols-2 gap-3 p-2 border border-gray-300 rounded-md">
+              {ENVIRONMENTS.map((environment) => (
+                <div
+                  key={environment.value}
+                  className="flex items-center space-x-2"
+                >
+                  <Checkbox
+                    id={environment.value}
+                    checked={selectedEnvironments.includes(environment.value)}
+                    onCheckedChange={(checked: boolean) =>
+                      handleEnvironmentChange(environment.value, checked as boolean)
+                    }
+                  />
+                  <Label
+                    htmlFor={environment.value}
+                    className="text-sm text-black cursor-pointer"
+                  >
+                    {environment.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Region Selector */}
           <div className="space-y-2">
             <Label className="text-black font-medium">Regions</Label>
-            <div className="grid grid-cols-3 gap-3 p-2 border border-gray-300 rounded-md">
+            <div className="grid grid-cols-2 gap-3 p-2 border border-gray-300 rounded-md">
               {REGIONS.map((region) => (
                 <div
                   key={region.value}

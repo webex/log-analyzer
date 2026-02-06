@@ -16,17 +16,42 @@ load_dotenv(dotenv_path=env_path)
 
 UV_PATH = "/Users/sarangsa/.local/bin/uv"
 
-# Region to Index Mappings
+# Region and Environment to Index Mappings
 REGION_INDEX_MAPPING = {
     "wxm_app": {
-        "us": "logstash-wxm-app",
-        "eu": "logstash-wxm-app-eu1"
+        "prod": {
+            "us": "logstash-wxm-app",
+            "eu": "logstash-wxm-app-eu1"
+        },
+        "int": {
+            "us": "logstash-wxm-app-int",
+            "eu": "logstash-wxm-appeu-int"
+        }
     },
     "wxcalling": {
-        "us": "logstash-wxcalling",
-        "eu": "logstash-wxcallingeuc1"
+        "prod": {
+            "us": "logstash-wxcalling",
+            "eu": "logstash-wxcallingeuc1"
+        },
+        "int": {
+            "us": "logstash-wxcalling-int",
+            "eu": "logstash-wxcalling-int"  # Same for both US and EU int
+        }
     }
 }
+
+# Helper function to format index mapping for prompts
+def format_index_mapping(service_key: str) -> str:
+    """Generate index selection logic string from REGION_INDEX_MAPPING"""
+    mapping = REGION_INDEX_MAPPING[service_key]
+    lines = []
+    for env in mapping:
+        env_label = "Production" if env == "prod" else "Integration"
+        for region in mapping[env]:
+            region_label = region.upper()
+            index_name = mapping[env][region]
+            lines.append(f"- {env_label} {region_label}: `{index_name}`")
+    return "\n".join(lines)
 
 # Agent 1: Search Mobius logs in wxm-app indexes
 wxm_search_agent = LlmAgent(
@@ -42,10 +67,24 @@ wxm_search_agent = LlmAgent(
 You are the Mobius Log Search Agent. Your job is to search for Mobius microservice logs in the logstash-wxm-app indexes.
 
 **1. Core Task:**
-Search the appropriate `logstash-wxm-app` indexes based on the selected regions:
-""" + '\n'.join(f'- {region.upper()} region: `{index}`' for region, index in REGION_INDEX_MAPPING['wxm_app'].items()) + """
+Search the appropriate `logstash-wxm-app` indexes based on BOTH selected environments AND regions.
 
-Check the user's region selection and ONLY search the indexes for the selected regions.
+Parse the user's query to identify:
+- Selected environments (from "environments" field): ["prod", "int"]
+- Selected regions (from "regions" field): ["us", "eu"]
+
+**Index Selection Logic:**
+""" + format_index_mapping('wxm_app') + """
+
+**CRITICAL**: Make separate tool calls for EACH environment+region combination selected.
+Example: If user selects environments=["prod", "int"] and regions=["us", "eu"], make 4 separate calls:
+1. """ + REGION_INDEX_MAPPING['wxm_app']['prod']['us'] + """ (prod+us)
+2. """ + REGION_INDEX_MAPPING['wxm_app']['prod']['eu'] + """ (prod+eu)
+3. """ + REGION_INDEX_MAPPING['wxm_app']['int']['us'] + """ (int+us)
+4. """ + REGION_INDEX_MAPPING['wxm_app']['int']['eu'] + """ (int+eu)
+
+If environments field is missing, default to ["prod"] only.
+If regions field is missing, default to ["us"] only.
 
 **2. Searchable Fields:**
 *   `fields.WEBEX_TRACKINGID.keyword`
@@ -166,6 +205,14 @@ Session ID search (search in both local and remote):
                         "OPENSEARCH_OAUTH_SCOPE": os.environ["OPENSEARCH_OAUTH_SCOPE"],
                         "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_BEARER_TOKEN_URL"],
                         "OPENSEARCH_OAUTH_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_TOKEN_URL"],
+                        "OPENSEARCH_OAUTH_TOKEN_INT": os.environ.get("OPENSEARCH_OAUTH_TOKEN_INT", ""),
+                        "OPENSEARCH_OAUTH_NAME_INT": os.environ.get("OPENSEARCH_OAUTH_NAME_INT", ""),
+                        "OPENSEARCH_OAUTH_PASSWORD_INT": os.environ.get("OPENSEARCH_OAUTH_PASSWORD_INT", ""),
+                        "OPENSEARCH_OAUTH_CLIENT_ID_INT": os.environ.get("OPENSEARCH_OAUTH_CLIENT_ID_INT", ""),
+                        "OPENSEARCH_OAUTH_CLIENT_SECRET_INT": os.environ.get("OPENSEARCH_OAUTH_CLIENT_SECRET_INT", ""),
+                        "OPENSEARCH_OAUTH_SCOPE_INT": os.environ.get("OPENSEARCH_OAUTH_SCOPE_INT", ""),
+                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL_INT": os.environ.get("OPENSEARCH_OAUTH_BEARER_TOKEN_URL_INT", ""),
+                        "OPENSEARCH_OAUTH_TOKEN_URL_INT": os.environ.get("OPENSEARCH_OAUTH_TOKEN_URL_INT", ""),
                     },
                 ),
             ),
@@ -238,10 +285,22 @@ wxcalling_search_agent = LlmAgent(
 You are the SSE/MSE Log Search Agent. Your job is to search for SSE and MSE microservice logs using the extracted session ID.
 
 **1. Core Task:**
-Search the appropriate `logstash-wxcalling` indexes based on the selected regions:
-""" + '\n'.join(f'- {region.upper()} region: `{index}`' for region, index in REGION_INDEX_MAPPING['wxcalling'].items()) + """
+Search the appropriate `logstash-wxcalling` indexes based on BOTH selected environments AND regions.
 
-Check the user's region selection and ONLY search the indexes for the selected regions.
+Parse the user's query to identify:
+- Selected environments (from "environments" field): ["prod", "int"]
+- Selected regions (from "regions" field): ["us", "eu"]
+
+**Index Selection Logic:**
+""" + format_index_mapping('wxcalling') + """
+
+**CRITICAL**: Make separate tool calls for EACH environment+region combination selected.
+Example: If user selects environments=["prod"] and regions=["us", "eu"], make 2 separate calls:
+1. """ + REGION_INDEX_MAPPING['wxcalling']['prod']['us'] + """ (prod+us)
+2. """ + REGION_INDEX_MAPPING['wxcalling']['prod']['eu'] + """ (prod+eu)
+
+If environments field is missing, default to ["prod"] only.
+If regions field is missing, default to ["us"] only.
 
 **2. Input:**
 Read the extracted session ID from {extracted_session_id}. 
@@ -316,6 +375,14 @@ Display: "Found X SSE/MSE logs. Preparing comprehensive analysis..."
                         "OPENSEARCH_OAUTH_SCOPE": os.environ["OPENSEARCH_OAUTH_SCOPE"],
                         "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_BEARER_TOKEN_URL"],
                         "OPENSEARCH_OAUTH_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_TOKEN_URL"],
+                        "OPENSEARCH_OAUTH_TOKEN_INT": os.environ.get("OPENSEARCH_OAUTH_TOKEN_INT", ""),
+                        "OPENSEARCH_OAUTH_NAME_INT": os.environ.get("OPENSEARCH_OAUTH_NAME_INT", ""),
+                        "OPENSEARCH_OAUTH_PASSWORD_INT": os.environ.get("OPENSEARCH_OAUTH_PASSWORD_INT", ""),
+                        "OPENSEARCH_OAUTH_CLIENT_ID_INT": os.environ.get("OPENSEARCH_OAUTH_CLIENT_ID_INT", ""),
+                        "OPENSEARCH_OAUTH_CLIENT_SECRET_INT": os.environ.get("OPENSEARCH_OAUTH_CLIENT_SECRET_INT", ""),
+                        "OPENSEARCH_OAUTH_SCOPE_INT": os.environ.get("OPENSEARCH_OAUTH_SCOPE_INT", ""),
+                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL_INT": os.environ.get("OPENSEARCH_OAUTH_BEARER_TOKEN_URL_INT", ""),
+                        "OPENSEARCH_OAUTH_TOKEN_URL_INT": os.environ.get("OPENSEARCH_OAUTH_TOKEN_URL_INT", ""),
                     },
                 ),
             ),
@@ -391,10 +458,22 @@ wxcas_search_agent = LlmAgent(
 You are the WxCAS Log Search Agent. Your job is to search for WxCAS (Webex Calling Application Server) logs using the extracted SSE Call-ID.
 
 **1. Core Task:**
-Search the appropriate `logstash-wxcalling` indexes based on the selected regions:
-""" + '\n'.join(f'- {region.upper()} region: `{index}`' for region, index in REGION_INDEX_MAPPING['wxcalling'].items()) + """
+Search the appropriate `logstash-wxcalling` indexes based on BOTH selected environments AND regions.
 
-Check the user's region selection and ONLY search the indexes for the selected regions.
+Parse the user's query to identify:
+- Selected environments (from "environments" field): ["prod", "int"]
+- Selected regions (from "regions" field): ["us", "eu"]
+
+**Index Selection Logic:**
+""" + format_index_mapping('wxcalling') + """
+
+**CRITICAL**: Make separate tool calls for EACH environment+region combination selected.
+Example: If user selects environments=["prod", "int"] and regions=["us"], make 2 separate calls:
+1. """ + REGION_INDEX_MAPPING['wxcalling']['prod']['us'] + """ (prod+us)
+2. """ + REGION_INDEX_MAPPING['wxcalling']['int']['us'] + """ (int+us)
+
+If environments field is missing, default to ["prod"] only.
+If regions field is missing, default to ["us"] only.
 
 **2. Input:**
 Read the extracted SSE Call-ID from {extracted_sse_callid}.
@@ -460,6 +539,14 @@ Display: "Found X WxCAS logs. Preparing comprehensive analysis..."
                         "OPENSEARCH_OAUTH_SCOPE": os.environ["OPENSEARCH_OAUTH_SCOPE"],
                         "OPENSEARCH_OAUTH_BEARER_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_BEARER_TOKEN_URL"],
                         "OPENSEARCH_OAUTH_TOKEN_URL": os.environ["OPENSEARCH_OAUTH_TOKEN_URL"],
+                        "OPENSEARCH_OAUTH_TOKEN_INT": os.environ.get("OPENSEARCH_OAUTH_TOKEN_INT", ""),
+                        "OPENSEARCH_OAUTH_NAME_INT": os.environ.get("OPENSEARCH_OAUTH_NAME_INT", ""),
+                        "OPENSEARCH_OAUTH_PASSWORD_INT": os.environ.get("OPENSEARCH_OAUTH_PASSWORD_INT", ""),
+                        "OPENSEARCH_OAUTH_CLIENT_ID_INT": os.environ.get("OPENSEARCH_OAUTH_CLIENT_ID_INT", ""),
+                        "OPENSEARCH_OAUTH_CLIENT_SECRET_INT": os.environ.get("OPENSEARCH_OAUTH_CLIENT_SECRET_INT", ""),
+                        "OPENSEARCH_OAUTH_SCOPE_INT": os.environ.get("OPENSEARCH_OAUTH_SCOPE_INT", ""),
+                        "OPENSEARCH_OAUTH_BEARER_TOKEN_URL_INT": os.environ.get("OPENSEARCH_OAUTH_BEARER_TOKEN_URL_INT", ""),
+                        "OPENSEARCH_OAUTH_TOKEN_URL_INT": os.environ.get("OPENSEARCH_OAUTH_TOKEN_URL_INT", ""),
                     },
                 ),
             ),

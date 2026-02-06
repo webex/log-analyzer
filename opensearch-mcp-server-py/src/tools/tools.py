@@ -50,25 +50,44 @@ async def get_index_mapping_tool(args: GetIndexMappingArgs) -> list[dict]:
         return [{"type": "text", "text": f"Error getting mapping: {str(e)}"}]
 
 OPENSEARCH_INDEX_URL_MAP = {
+    # Production endpoints
     "logstash-wxm-app": "https://logs-api-ci-wxm-app.o.webex.com/",
     "logstash-wxcalling": "https://logs-api-ci-wxcalling.o.webex.com/",
     "logstash-wxm-app-eu1": "https://logs-api-ci-wxm-app-eu1.o.webex.com/",
     "logstash-wxcallingeuc1": "https://logs-api-ci-wxcalling-euc1.o.webex.com/",
     "logstash-wbx2-access": "https://logs-api-ci-wbx2-access.o.webex.com/",
+    
+    # Integration endpoints
+    "logstash-wxm-app-int": "https://logs-api-ci-wxm-app.o-int.webex.com/",
+    "logstash-wxcalling-int": "https://logs-api-ci-wxcalling.o-int.webex.com/",
+    "logstash-wxm-appeu-int": "https://logs-api-ci-wxm-appeu.o-int.webex.com/",
 }
 
 async def search_index_tool(args: SearchIndexArgs) -> list[dict]:
     try:
         opensearch_url = OPENSEARCH_INDEX_URL_MAP[args.index]
-        result = search_index(opensearch_url, args.index, args.query)
-        formatted_result = json.dumps(result, indent=2)
+        
+        # Determine environment from index name and select appropriate OAuth token
+        is_integration = args.index.endswith('-int')
+        oauth_token_key = "OPENSEARCH_OAUTH_TOKEN_INT" if is_integration else "OPENSEARCH_OAUTH_TOKEN"
+        
+        # Temporarily set the OAuth token for this request
+        original_token = os.getenv("OPENSEARCH_OAUTH_TOKEN", "")
+        os.environ["OPENSEARCH_OAUTH_TOKEN"] = os.getenv(oauth_token_key, "")
+        
+        try:
+            result = search_index(opensearch_url, args.index, args.query)
+            formatted_result = json.dumps(result, indent=2)
 
-        return [
-            {
-                "type": "text",
-                "text": f"{formatted_result}",
-            }
-        ]
+            return [
+                {
+                    "type": "text",
+                    "text": f"{formatted_result}",
+                }
+            ]
+        finally:
+            # Restore original token
+            os.environ["OPENSEARCH_OAUTH_TOKEN"] = original_token
     except Exception as e:
         return [{"type": "text", "text": f"Error searching index: {str(e)}"}]
 
