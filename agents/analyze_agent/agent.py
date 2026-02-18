@@ -11,10 +11,10 @@ load_dotenv(dotenv_path=env_path)
 # Sub-agent
 calling_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-5.2",
+        model="openai/gpt-4.1",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_version=os.environ["AZURE_API_VERSION"],
+        extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),
     name="calling_agent",
     output_key="analyze_results",
@@ -123,10 +123,10 @@ calling_agent = LlmAgent(
 # Sub-agent
 contact_center_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-5.2",
+        model="openai/gpt-4.1",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_version=os.environ["AZURE_API_VERSION"],
+        extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),
     name="contact_center_agent",
     output_key="analyze_results",
@@ -237,10 +237,10 @@ analyze_agent = LlmAgent(
     name="analyze_agent",
     output_key="analyze_results",
     model=LiteLlm(
-        model="azure/gpt-5.2",
+        model="openai/gpt-4.1",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_version=os.environ["AZURE_API_VERSION"],
+        extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),
     instruction=("""
         Context: You are analyzing logs from a WebRTC Calling or contact center flow, which involves talking to different endpoints using protocols like HTTP, SIP, WebRTC, SDP, RTP, TLS. 

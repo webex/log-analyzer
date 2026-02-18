@@ -56,10 +56,10 @@ def format_index_mapping(service_key: str) -> str:
 # Agent 1: Search Mobius logs in wxm-app indexes
 wxm_search_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-5.2",
+        model="openai/gpt-4.1",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_version=os.environ["AZURE_API_VERSION"],
+        extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),
     name="wxm_search_agent",
     output_key="mobius_logs",
@@ -224,10 +224,10 @@ Session ID search (search in both local and remote):
 # Agent 2: Extract session ID from Mobius logs
 session_extractor_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-5.2",
+        model="openai/gpt-4.1",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_version=os.environ["AZURE_API_VERSION"],
+        extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),
     name="session_extractor_agent",
     output_key="extracted_session_id",
@@ -274,10 +274,10 @@ EXTRACTED_SESSION_ID: NONE
 # Agent 3: Search SSE/MSE logs in wxcalling indexes
 wxcalling_search_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-5.2",
+        model="openai/gpt-4.1",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_version=os.environ["AZURE_API_VERSION"],
+        extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),
     name="wxcalling_search_agent",
     output_key="sse_mse_logs",
@@ -394,10 +394,10 @@ Display: "Found X SSE/MSE logs. Preparing comprehensive analysis..."
 # Agent 4: Extract SSE Call-ID from SSE/MSE logs
 sse_callid_extractor_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-5.2",
+        model="openai/gpt-4.1",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_version=os.environ["AZURE_API_VERSION"],
+        extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),
     name="sse_callid_extractor_agent",
     output_key="extracted_sse_callid",
@@ -447,10 +447,10 @@ EXTRACTED_SSE_CALLID: NONE
 # Agent 5: Search WxCAS logs in wxcalling indexes
 wxcas_search_agent = LlmAgent(
     model=LiteLlm(
-        model="azure/gpt-5.2",
+        model="openai/gpt-4.1",
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_version=os.environ["AZURE_API_VERSION"],
+        extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),
     name="wxcas_search_agent",
     output_key="wxcas_logs",
