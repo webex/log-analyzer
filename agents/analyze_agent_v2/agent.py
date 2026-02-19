@@ -62,24 +62,6 @@ Read each log line, extract its meaning, and incorporate it into the analysis.
 If there are hundreds of logs, produce a correspondingly detailed analysis.**
 """
 
-_ENDPOINTS_DESCRIPTION = """
-Endpoints involved, description of the services and their roles:
-- Webex SDK/Client (Web or native app making the request): It is a chrome extension or any third party web application that consumes the webex calling sdk
-- Mobius: Mobius is a microservice that interworks between WebRTC and SIP to enable Webex Calling users to register and make calls using a web browser. It translates browser-originated signaling (HTTP/WSS) into SIP for backend communication.
-    - Mobius Multi-Instance Architecture: Multiple Mobius servers are deployed across different geographic regions (e.g., US, EU, APAC). When a user initiates a call from their browser, their geolocation (based on IP) is used to route them to the nearest Mobius instance using a GeoDNS or load balancer.
-    - Mobius talks to following components:
-        - CPAPI (Cisco Platform API for user entitlement and application metadata)
-        - CXAPI (Webex Calling Call Control API): CXAPI is a stateless micro-service that implements the messaging logic behind the Webex Calling Call Control API. When incoming requests are received, it validates the customer/user the request is made on behalf of belongs to Webex calling and has the appropriate scope and roles assigned to make the request. It then converts the request to the appropriate OCI requests and routes it to the OCIRouter to route to the correct WxC deployment
-- U2C (User to Cluster): It is a microservice responsible for helping services find other service instances across multiple Data Centers. Its main goal is to take a user's email or uuid and a service name (optional), and return the catalog containing the service URLs.
-- WDM (Webex squared Device Manager): It is a microservice that is responsible for registering a device and proxying feature toggles and settings for the user to bootstrap the Webex clients.
-    - If WDM is showing a lot of 502 responses then it could be that one of the following dependencies is showing a failure: Common Identity CI, Mercury API, U2C, Feature Service, Cassandra, Redis.
-    - If WDM is generating errors then either Locus will start producing 502 responses or the clients will show an error.
-- SSE (Signalling Service Edge): It is an edge component, used for SIP signalling. It communicates with 2 endpoints — mobius and application server WxCAS.
-- MSE (Media Service Engine): An edge component for media relay that handles RTP for WebRTC clients.
-- Webex Calling Application Server (WxCAS): The core control application in Webex Calling responsible for enabling communication between source SSE and destination SSE.
-- Mercury: Webex's real-time messaging and signaling service that establishes websocket connections and helps to exchange information in the form of events. Mobius uses mercury to send events to SDK. SDK establishes a mercury connection which is a websocket connection to receive communication from mobius
-"""
-
 _ANALYSIS_POINTS = """
 **Be THOROUGH and EXHAUSTIVE in your analysis. This is critical debugging information.**
 
@@ -234,6 +216,11 @@ mobius_error_skill = load_skill_from_dir(
 )
 mobius_skill_toolset = skill_toolset.SkillToolset(skills=[mobius_error_skill])
 
+architecture_endpoints_skill = load_skill_from_dir(
+    Path(__file__).parent / "skills" / "architecture_endpoints_skill"
+)
+architecture_skill_toolset = skill_toolset.SkillToolset(skills=[architecture_endpoints_skill])
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Sub-agent: WebRTC Calling flow
@@ -243,22 +230,12 @@ calling_agent = LlmAgent(
     model=_make_model(),
     name="calling_agent",
     output_key="analyze_results",
-    tools=[mobius_skill_toolset],
+    tools=[mobius_skill_toolset, architecture_skill_toolset],
     instruction=f"""You are a senior VoIP/WebRTC debugging expert with deep expertise in HTTP, WebRTC, SIP, SDP, RTP, SRTP, DTLS, ICE, TCP, UDP, TLS, and related protocols. You produce EXHAUSTIVE, production-grade debug analyses that leave no log entry unexamined.
 
 {_SEARCH_CONTEXT_PREAMBLE}
 
-# WebRTC Calling End-to-End Architecture:
-
-**Signaling Path**: Browser → Mobius (HTTP/WSS→SIP translation) → SSE (SIP edge) → WxCAS (Application Server) → Destination
-**Media Path**: Browser ↔ MSE (DTLS-SRTP) ↔ Destination
-
-**Call Types & Routing:**
-- **WebRTC to WebRTC**: WxCAS resolves destination browser → Mobius notifies Browser 2 → Both browsers establish DTLS-SRTP with their local MSE
-- **WebRTC to PSTN**: WxCAS resolves PSTN destination → SSE signals toward Local Gateway → Browser↔MSE1 (DTLS-SRTP), MSE1↔MSE2 (RTP), MSE2→LGW (RTP→PSTN)
-- **WebRTC to Desk Phone**: WxCAS resolves desk phone → SSE coordinates with MSE → Browser↔MSE1 (DTLS-SRTP), MSE1↔MSE2 (RTP), MSE2→Desk Phone
-
-{_ENDPOINTS_DESCRIPTION}
+Use the **architecture_endpoints_skill** for service roles, signaling/media paths, and WebRTC Calling architecture (see references/architecture_and_endpoints.md — endpoints and WebRTC Calling sections).
 
 **Log Sources — Analyze ALL of them thoroughly:**
 1. **Mobius logs** from {{{{mobius_logs}}}} (logstash-wxm-app indexes) — HTTP/WebSocket signaling, SIP translation, device registration
@@ -293,21 +270,12 @@ contact_center_agent = LlmAgent(
     model=_make_model(),
     name="contact_center_agent",
     output_key="analyze_results",
+    tools=[architecture_skill_toolset],
     instruction=f"""You are a senior VoIP/Contact Center debugging expert with deep expertise in HTTP, WebRTC, SIP, SDP, RTP, SRTP, DTLS, ICE, TCP, UDP, TLS, and related protocols. You produce EXHAUSTIVE, production-grade debug analyses that leave no log entry unexamined.
 
 {_SEARCH_CONTEXT_PREAMBLE}
 
-# Contact Center End-to-End Architecture:
-
-**Signaling Path**: Browser → Mobius → SSE → Kamailio (SIP proxy) → Destination
-**Media Path**: Browser ↔ MSE ↔ Destination
-
-**Additional Contact Center Components:**
-- **Kamailio**: SIP proxy for Contact Center — handles SIP REGISTER, stores registration details on RTMS Application Server, routes calls to the appropriate destination
-- **RTMS**: Real-time microservice enabling persistent WebSocket connections between clients and backend services
-- **RAS**: Registration, Activation, and provisioning Service — stores SIP REGISTER Contact and Path headers with expiry, maintains metrics for webRTC active sessions and calls to webRTC phones
-
-{_ENDPOINTS_DESCRIPTION}
+Use the **architecture_endpoints_skill** for service roles and Contact Center architecture (see references/architecture_and_endpoints.md — endpoints and Contact Center sections).
 
 **Log Sources — Analyze ALL of them thoroughly:**
 1. **Mobius logs** from {{{{mobius_logs}}}} (logstash-wxm-app indexes) — HTTP/WebSocket signaling, SIP translation
