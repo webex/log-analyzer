@@ -81,6 +81,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>([]);
+  const [detailedAnalysis, setDetailedAnalysis] = useState(false);
 
   const handleServiceChange = (service: string, checked: boolean) => {
     if (checked) {
@@ -117,6 +118,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
       regions: selectedRegions,
       environments: selectedEnvironments,
       timeFilter,
+      detailedAnalysis,
     };
 
     onSearch(searchParams);
@@ -269,6 +271,28 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
                   </Label>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Detailed Analysis */}
+          <div className="flex items-center space-x-3 p-2 border border-gray-300 rounded-md">
+            <Checkbox
+              id="detailedAnalysis"
+              checked={detailedAnalysis}
+              onCheckedChange={(checked: boolean) =>
+                setDetailedAnalysis(checked as boolean)
+              }
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor="detailedAnalysis"
+                className="text-sm text-black font-medium cursor-pointer"
+              >
+                Detailed Analysis
+              </Label>
+              <p className="text-xs text-gray-500">
+                Include raw logs in analysis output
+              </p>
             </div>
           </div>
 

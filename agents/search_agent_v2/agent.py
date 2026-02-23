@@ -741,9 +741,15 @@ Output ONLY a valid JSON object with this exact structure:
 {
     "identifiers": [{"value": "<id_value>", "type": "<id_type>"}],
     "environments": ["prod"],
-    "regions": ["us"]
+    "regions": ["us"],
+    "detailedAnalysis": false
 }
 ```
+
+**detailedAnalysis Detection:**
+- Look for a "detailedAnalysis" field if the query is structured JSON
+- Look for mentions of "detailed analysis", "detailed", "verbose", "full analysis"
+- Default: false
 
 **ID Type Detection Rules:**
 - Pattern `SSE\\d+@[\\d.]+` (e.g. SSE0520080392@10.249.187.80) → type: "sse_call_id"
@@ -926,6 +932,9 @@ class ExhaustiveSearchAgent(BaseAgent):
         identifiers = parsed.get("identifiers", [])
         environments = parsed.get("environments", ["prod"])
         regions = parsed.get("regions", ["us"])
+        detailed_analysis = parsed.get("detailedAnalysis", False)
+
+        ctx.session.state["detailed_analysis"] = detailed_analysis
 
         if not identifiers:
             logger.error(f"[{self.name}] No identifiers found in parsed query. Full parsed result: {parsed}")

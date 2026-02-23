@@ -117,7 +117,30 @@ Your analysis MUST cover ALL of the following in full detail:
 """
 
 _OUTPUT_STRUCTURE = """
+**Output Detail Level:** {detailed_analysis}
+If detailed_analysis is false, empty, or not set:
+- Do NOT include the "HTTP Communication Flow (Detailed)" section
+- Do NOT include the "SIP Communication Flow (Detailed)" section
+- Only output these sections: Root Cause Analysis, Extracted Identifiers, Search Scope, Cross-Service Correlation, Timing Analysis, Final Outcome
+
+If detailed_analysis is true:
+- Include ALL sections below, including the detailed HTTP and SIP Communication Flow
+
 **Output structure (follow this EXACTLY):**
+
+---
+### ❗ Root Cause Analysis
+(Place this section at the VERY TOP of your analysis—first section. If no errors/issues were found, state "No errors or issues detected" and briefly confirm the flow succeeded.)
+
+For EACH issue found:
+→ **[Timestamp]**: ErrorType (ErrorCode)
+→ **Service**: Which service generated the error
+→ **Context**: What was happening when this error occurred
+→ **Description**: Detailed explanation of what went wrong
+→ **Potential Root Causes**: List all possible causes, ranked by likelihood
+→ **Suggested Fix**: Clear, actionable steps to resolve
+→ **Impact**: How did this error affect the call/session?
+→ **Notes**: Documentation references, escalation contacts, related issues
 
 ---
 ### 🔍 Extracted Identifiers
@@ -135,37 +158,8 @@ List ALL unique identifiers found across all log sources:
 ---
 ### 📊 Search Scope
 - **IDs searched**: (from search_summary.total_ids_searched)
-- **BFS depth reached**: (from search_summary.max_depth_reached)
 - **Indexes queried**: (list unique indexes from search_summary.search_history)
 - **Total logs analyzed**: Mobius: X, SSE/MSE: Y, WxCAS: Z
-
----
-### 📡 HTTP Communication Flow
-List ALL HTTP requests and responses in strict chronological order.
-Each entry should be ONE concise line with the format:
-
-→ **[Timestamp]** Source → Destination: METHOD /path - StatusCode (Brief description)
-
-Example:
-→ **[2026-02-13T10:00:00Z]** Client → Mobius: POST /v1/calling/web/devices/.../call - 200 OK (Call initiation)
-→ **[2026-02-13T10:00:01Z]** Mobius → CPAPI: GET /features - 200 OK (Feature retrieval)
-
-**Do NOT skip any HTTP interactions.** If there are 50 requests, list all 50.
-
----
-### 📞 SIP Communication Flow
-List ALL SIP messages in strict chronological order.
-Keep Mobius, SSE, MSE, and WxCAS as separate participants.
-
-→ **[Timestamp]** Source → Destination: SIP Method/Response - Call-ID: xxx - Description
-→ **[Timestamp]** Mobius → SSE: SIP INVITE - Call-ID: SSE0520... - Initial call setup
-→ **[Timestamp]** SSE → Mobius: 100 Trying - Call-ID: SSE0520... - Call being processed
-→ **[Timestamp]** SSE → WxCAS: INVITE - Call-ID: SSE0520... - Routing to app server
-→ **[Timestamp]** WxCAS → SSE: 200 OK - Call-ID: SSE0520... - Call accepted
-→ **[Timestamp]** SSE → Mobius: 200 OK - Call-ID: SSE0520... - Final response
-
-Include SDP summary when available (codec, media type, ICE candidates count).
-**Do NOT skip any SIP messages.** Reconstruct the COMPLETE dialog.
 
 ---
 ### 🔗 Cross-Service Correlation
@@ -190,18 +184,33 @@ Provide a comprehensive summary of the entire flow:
 - Any degradation or issues even if the call succeeded
 
 ---
-### ❗ Root Cause Analysis
-(Only if errors/issues were found. Be DETAILED and SPECIFIC.)
+### 📡 HTTP Communication Flow (Detailed)
+Place this section at the BOTTOM of your analysis, after Root Cause Analysis and all summaries.
+List ALL HTTP requests and responses in strict chronological order.
+Each entry should be ONE concise line with the format:
 
-For EACH issue found:
-→ **[Timestamp]**: ErrorType (ErrorCode)
-→ **Service**: Which service generated the error
-→ **Context**: What was happening when this error occurred
-→ **Description**: Detailed explanation of what went wrong
-→ **Potential Root Causes**: List all possible causes, ranked by likelihood
-→ **Suggested Fix**: Clear, actionable steps to resolve
-→ **Impact**: How did this error affect the call/session?
-→ **Notes**: Documentation references, escalation contacts, related issues
+→ **[Timestamp]** Source → Destination: METHOD /path - StatusCode (Brief description)
+
+Example:
+→ **[2026-02-13T10:00:00Z]** Client → Mobius: POST /v1/calling/web/devices/.../call - 200 OK (Call initiation)
+→ **[2026-02-13T10:00:01Z]** Mobius → CPAPI: GET /features - 200 OK (Feature retrieval)
+
+**Do NOT skip any HTTP interactions.** If there are 50 requests, list all 50.
+
+---
+### 📞 SIP Communication Flow (Detailed)
+List ALL SIP messages in strict chronological order, after the HTTP Communication Flow.
+Keep Mobius, SSE, MSE, and WxCAS as separate participants.
+
+→ **[Timestamp]** Source → Destination: SIP Method/Response - Call-ID: xxx - Description
+→ **[Timestamp]** Mobius → SSE: SIP INVITE - Call-ID: SSE0520... - Initial call setup
+→ **[Timestamp]** SSE → Mobius: 100 Trying - Call-ID: SSE0520... - Call being processed
+→ **[Timestamp]** SSE → WxCAS: INVITE - Call-ID: SSE0520... - Routing to app server
+→ **[Timestamp]** WxCAS → SSE: 200 OK - Call-ID: SSE0520... - Call accepted
+→ **[Timestamp]** SSE → Mobius: 200 OK - Call-ID: SSE0520... - Final response
+
+Include SDP summary when available (codec, media type, ICE candidates count).
+**Do NOT skip any SIP messages.** Reconstruct the COMPLETE dialog.
 
 ---
 """
