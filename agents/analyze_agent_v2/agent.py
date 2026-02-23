@@ -119,9 +119,9 @@ Your analysis MUST cover ALL of the following in full detail:
 _OUTPUT_STRUCTURE = """
 **Output Detail Level:** {detailed_analysis}
 If detailed_analysis is false, empty, or not set:
-- Do NOT include the "HTTP Communication Flow (Detailed)" section
-- Do NOT include the "SIP Communication Flow (Detailed)" section
-- Only output these sections: Root Cause Analysis, Extracted Identifiers, Search Scope, Cross-Service Correlation, Timing Analysis, Final Outcome
+- COMPLETELY OMIT the "HTTP Communication Flow (Detailed)" section — do not print its header, do not print a placeholder, do not mention it at all
+- COMPLETELY OMIT the "SIP Communication Flow (Detailed)" section — do not print its header, do not print a placeholder, do not mention it at all
+- Your output must end after the "Final Outcome" section. Nothing after it.
 
 If detailed_analysis is true:
 - Include ALL sections below, including the detailed HTTP and SIP Communication Flow
