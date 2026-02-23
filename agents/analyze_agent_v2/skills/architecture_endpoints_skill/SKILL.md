@@ -11,4 +11,10 @@ When analyzing Mobius, SSE, MSE, or WxCAS logs, use this skill to look up:
 - **Signaling and media paths**: End-to-end flow for WebRTC Calling vs. Contact Center (browser → Mobius → SSE → …).
 - **Call types and routing**: WebRTC-to-WebRTC, WebRTC-to-PSTN, WebRTC-to-Desk Phone, and Contact Center flows.
 
-Consult the reference document **references/architecture_and_endpoints.md** for the full descriptions. Use it to attribute log lines to the correct service and to explain signaling/media paths in your analysis.
+Consult the reference documents:
+
+- **references/architecture_and_endpoints.md** — service roles and endpoint descriptions.
+- **references/calling_flow.md** — WebRTC Calling end-to-end architecture (signaling, media, call types).
+- **references/contact_center_flow.md** — Contact Center end-to-end architecture (signaling, media, Kamailio/RTMS/RAS, health ping, timers, failover).
+
+Use them to attribute log lines to the correct service and to explain signaling/media paths in your analysis.

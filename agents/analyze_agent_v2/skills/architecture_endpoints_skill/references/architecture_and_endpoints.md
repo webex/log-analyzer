@@ -26,28 +26,6 @@
 
 ---
 
-## WebRTC Calling — End-to-End Architecture
+For **WebRTC Calling** flow details (signaling path, media path, call types & routing), see **references/calling_flow.md**.
 
-**Signaling Path**: Browser → Mobius (HTTP/WSS→SIP translation) → SSE (SIP edge) → WxCAS (Application Server) → Destination
-
-**Media Path**: Browser ↔ MSE (DTLS-SRTP) ↔ Destination
-
-**Call Types & Routing:**
-
-- **WebRTC to WebRTC**: WxCAS resolves destination browser → Mobius notifies Browser 2 → Both browsers establish DTLS-SRTP with their local MSE.
-- **WebRTC to PSTN**: WxCAS resolves PSTN destination → SSE signals toward Local Gateway → Browser↔MSE1 (DTLS-SRTP), MSE1↔MSE2 (RTP), MSE2→LGW (RTP→PSTN).
-- **WebRTC to Desk Phone**: WxCAS resolves desk phone → SSE coordinates with MSE → Browser↔MSE1 (DTLS-SRTP), MSE1↔MSE2 (RTP), MSE2→Desk Phone.
-
----
-
-## Contact Center — End-to-End Architecture
-
-**Signaling Path**: Browser → Mobius → SSE → Kamailio (SIP proxy) → Destination
-
-**Media Path**: Browser ↔ MSE ↔ Destination
-
-**Additional Contact Center Components:**
-
-- **Kamailio**: SIP proxy for Contact Center — handles SIP REGISTER, stores registration details on RTMS Application Server, routes calls to the appropriate destination.
-- **RTMS**: Real-time microservice enabling persistent WebSocket connections between clients and backend services.
-- **RAS** (Registration, Activation, and provisioning Service): Stores SIP REGISTER Contact and Path headers with expiry, maintains metrics for WebRTC active sessions and calls to WebRTC phones.
+For **Contact Center** flow details (signaling path, media path, Kamailio/RTMS/RAS, health ping, timers, Kafka failover, inter-regional failover), see **references/contact_center_flow.md**.

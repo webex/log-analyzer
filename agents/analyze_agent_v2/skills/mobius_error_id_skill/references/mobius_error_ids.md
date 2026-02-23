@@ -313,13 +313,13 @@ Reference for Mobius HTTP response codes and `mobius-error` codes. Use this to i
 
 ---
 
-## Useful Mobius log filters (Kibana / OpenSearch)
+## Timers (keepalive and unregistration)
 
-- `tags: mobius` — all Mobius-related logs
-- `fields.eventType`: `mobiusapp` (application), `sipmsg` (SIP), `httpmsg` (HTTP)
-- `fields.id`: `mobiusreg`, `mobiuscall`, `mobiusconn`, `mobiusdns`, `mobiuscallkeepalive`, `mobiusregkeepalive`
-- `fields.localAlias`: `mobius-reg-app`, `mobius-sip-app`, `mobius-call-app`
-- `fields.response_status` — HTTP response to client
-- `fields.mobiusCallId`, `fields.sipCallId`, `fields.DEVICE_ID`, `fields.USER_ID`, `fields.WEBEX_TRACKINGID`
+When correlating registration/call failures or unexpected unregisters, use these values (Mobius Basic Training and 2 AM Guide):
 
-Index pattern: `wxm-app:logs*` (EU may use a separate index).
+- **Registration keepalive:** Browser sends keepalive every **30 seconds**. After **5 missed** keepalives, Mobius triggers **unregistration**. So ~150 seconds of no keepalive → unregister.
+- **Call keepalive:** Browser sends keepalive during a call; valid **within 15 minutes**.
+- **SIP APP – Registration refresh:** Refreshes with SSE at **3/4 of the Expires** header from REGISTER.
+- **SIP APP – Options:** OPTIONS ping to SSE every **35 seconds** to check connectivity.
+
+If you see unregistration (e.g. 404 or 503 with "Call/s exist for this device") shortly after gaps in logs, consider keepalive miss (network, client suspend, or load) as a cause.
