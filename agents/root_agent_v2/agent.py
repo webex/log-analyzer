@@ -18,6 +18,16 @@ env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# OAuth Token Initialization (must run BEFORE sub-agent imports)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+from oauth_manager import get_token_manager_machine
+
+oauth_manager = get_token_manager_machine()
+oauth_manager.initialize()
+logging.info("✓ root_agent_v2: OAuth token initialized and refresh loop started")
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Import sub-agents
 # ═══════════════════════════════════════════════════════════════════════════════
 

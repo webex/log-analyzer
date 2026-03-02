@@ -176,10 +176,11 @@ class OAuthTokenManagerMachine:
         return tokens
     
     def set_environment_token(self, access_token: str):
-        """Set the access token in environment variable"""
+        """Set the access token in environment variables for LiteLLM compatibility"""
         os.environ["AZURE_OPENAI_API_KEY"] = access_token
+        os.environ["OPENAI_API_KEY"] = access_token
         self.access_token = access_token
-        logger.info("Set AZURE_OPENAI_API_KEY environment variable")
+        logger.info("Set AZURE_OPENAI_API_KEY and OPENAI_API_KEY environment variables")
     
     def update_tokens(self, tokens: Dict[str, any]):
         """Update tokens from API response"""
@@ -254,6 +255,8 @@ class OAuthTokenManagerMachine:
         if existing_token:
             logger.info("AZURE_OPENAI_API_KEY already set in environment, skipping OAuth initialization")
             self.access_token = existing_token
+            # Ensure OPENAI_API_KEY is also set for LiteLLM compatibility
+            os.environ["OPENAI_API_KEY"] = existing_token
             return {"access_token": existing_token, "source": "environment"}
         
         logger.info("Initializing OAuth with machine account authentication...")
