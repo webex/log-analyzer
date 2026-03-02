@@ -1,81 +1,152 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { SearchForm } from "@/components/search-form";
-import { ResultsTabs } from "@/components/results-tabs";
-import { SessionManager } from "@/lib/session-manager";
-import { Card } from "@/components/ui/card";
+import { useState } from "react"
+import { SearchForm } from "@/components/search-form"
+import { ChatPanel, type ChatMessage } from "@/components/chat-panel"
+import { SessionManager } from "@/lib/session-manager"
+import { Card } from "@/components/ui/card"
+
+const FIELD_LABELS: Record<string, string> = {
+  "fields.WEBEX_TRACKINGID.keyword": "Tracking ID",
+  "fields.mobiusCallId.keyword": "Mobius Call ID",
+  "fields.USER_ID.keyword": "User ID",
+  "fields.DEVICE_ID.keyword": "Device ID",
+  "fields.WEBEX_MEETING_ID.keyword": "Meeting ID",
+  "fields.LOCUS_ID.keyword": "Locus ID",
+  "fields.sipCallId.keyword": "SIP Call ID",
+  "callId.keyword": "Call ID",
+  "traceId.keyword": "Trace ID",
+  sessionId: "Session ID",
+  message: "Global Search",
+}
+
+function formatSearchLabel(params: any): string {
+  const field = FIELD_LABELS[params.searchField] || params.searchField
+  const parts = [`${field}: ${params.searchValue}`]
+
+  const envLabels = (params.environments || []).map((e: string) =>
+    e === "prod" ? "Production" : "Integration"
+  )
+  if (envLabels.length) parts.push(envLabels.join(", "))
+
+  const regions = (params.regions || []).map((r: string) => r.toUpperCase())
+  if (regions.length) parts.push(regions.join(", "))
+
+  return parts.join(" · ")
+}
+
+function extractChatResponse(events: any[]): string {
+  if (!Array.isArray(events)) return ""
+  for (let i = events.length - 1; i >= 0; i--) {
+    const event = events[i]
+    if (event.author === "chat_agent") {
+      const text = event.content?.parts?.[0]?.text
+      if (text) return text
+    }
+  }
+  return ""
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError"
+}
+
+function makeId(): string {
+  return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+}
 
 export default function HomePage() {
-  const [results, setResults] = useState<any>(null);
-  const [analysis, setAnalysis] = useState<string>("");
-  const [mermaidCode, setMermaidCode] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [sessionManager] = useState(() => new SessionManager());
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [loading, setLoading] = useState(false)
+  const [sessionManager] = useState(() => new SessionManager())
+
+  const appendMessage = (role: "user" | "assistant", content: string) => {
+    setMessages((prev) => [...prev, { id: makeId(), role, content }])
+  }
+
+  const handleStop = async () => {
+    if (!loading) return
+
+    sessionManager.abort()
+
+    try {
+      const { state, events } = await sessionManager.getSession()
+
+      const conversationEvents = events.filter(
+        (e: any) => e.author === "user" || e.author === "chat_agent"
+      )
+
+      if (
+        conversationEvents.length > 0 &&
+        conversationEvents[conversationEvents.length - 1].author === "user"
+      ) {
+        conversationEvents.pop()
+      }
+
+      await sessionManager.deleteSession()
+      await sessionManager.createSessionWithContext(state, conversationEvents)
+    } catch (error) {
+      console.error("Stop: failed to transfer session context:", error)
+      try {
+        await sessionManager.deleteSession()
+      } catch {
+        /* best effort */
+      }
+    }
+
+    setLoading(false)
+  }
 
   const handleSearch = async (searchParams: any) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      await sessionManager.ensureSession();
+      await sessionManager.ensureSession()
 
-      setResults(null);
-      setAnalysis("");
-      setMermaidCode("");
+      appendMessage("user", formatSearchLabel(searchParams))
 
-      const events = await sessionManager.sendQuery(searchParams);
-      console.log("Search events received:", events);
-
-
-      let logs: any[] = [];
-      let extractedAnalysis = "";
-      let extractedMermaid = "";
-
-      events.forEach((event: any, iter: number) => {
-        const author = event.author;
-        const parts = event.content?.parts || [];
-
-        // Extract logs from search_agent
-        if ((author === "wxm_search_agent" || author === "wxcalling_search_agent" || author === "wxcas_search_agent") && (parts.length > 0 && parts[0].functionResponse)) {
-          console.log(`Processing logs from ${author} at event index ${iter}`);
-          parts.forEach((part: any) => {
-            try {
-              const hits = JSON.parse(
-                part.functionResponse?.response?.content?.[0]?.text || "{}"
-              )?.hits?.hits;
-              if (hits && hits.length > 0) logs.push(...hits);
-            } catch (error) {
-              console.error("Failed to parse log entry:", error);
-            }
-          });
-        }
-
-        // Extract analysis from analyze_agent
-        if ((author === "calling_agent" || author === "contact_center_agent") && !extractedAnalysis) {
-          extractedAnalysis = parts[0]?.text || "";
-        }
-
-        // Extract Mermaid sequence diagram from sequence_diagram_agent
-        if (author === "sequence_diagram_agent" && !extractedMermaid) {
-          extractedMermaid = parts[0]?.text || "";
-        }
-
-      }); 
-
-      console.log("Combined Logs:", logs);
-      
-      setResults(logs);
-      setAnalysis(extractedAnalysis);
-      setMermaidCode(extractedMermaid);
-
-      console.log("Parsed Results:", logs);
-      console.log("Analysis:", extractedAnalysis);
-      console.log("Mermaid Code:", extractedMermaid);
+      const events = await sessionManager.sendMessage(
+        JSON.stringify(searchParams)
+      )
+      const response = extractChatResponse(events)
+      appendMessage(
+        "assistant",
+        response ||
+          "The analysis pipeline completed but no chat response was generated."
+      )
     } catch (error) {
-      console.error("Search failed:", error);
+      if (isAbortError(error)) return
+      console.error("Search failed:", error)
+      appendMessage(
+        "assistant",
+        "An error occurred while processing your search. Please try again."
+      )
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const handleSendMessage = async (text: string) => {
+    setLoading(true)
+    appendMessage("user", text)
+    try {
+      await sessionManager.ensureSession()
+      const events = await sessionManager.sendMessage(text)
+      const response = extractChatResponse(events)
+      appendMessage(
+        "assistant",
+        response || "No response from the assistant."
+      )
+    } catch (error) {
+      if (isAbortError(error)) return
+      console.error("Chat failed:", error)
+      appendMessage(
+        "assistant",
+        "An error occurred. Please try again."
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="h-screen flex flex-row gap-0 overflow-hidden">
@@ -83,146 +154,15 @@ export default function HomePage() {
         <SearchForm onSearch={handleSearch} loading={loading} />
       </div>
       <div className="flex flex-1 p-3">
-        <Card className="border-gray-200 flex flex-1 items-center justify-center">
-          {!results && !loading && (
-            <div className="mt-12 text-center text-gray-500">
-              Start searching :)
-            </div>
-          )}
-
-          {loading && (
-            <div className="mt-12 text-center text-gray-500">
-              Loading results...
-            </div>
-          )}
-
-          {/* {results && results.length === 0 && !loading && (
-            <div className="mt-12 text-center text-gray-500">
-              No results found for your query :(
-            </div>
-          )} */}
-
-          {analysis !== "" && (
-            <ResultsTabs
-              results={results}
-              analysis={analysis}
-              mermaidCode={mermaidCode}
-            />
-          )}
+        <Card className="border-gray-200 flex flex-1 overflow-hidden relative">
+          <ChatPanel
+            messages={messages}
+            loading={loading}
+            onSendMessage={handleSendMessage}
+            onStop={handleStop}
+          />
         </Card>
       </div>
     </div>
-  );
+  )
 }
-
-
-
-//old code
-// "use client";
-
-// import { useState } from "react";
-// import { SearchForm } from "@/components/search-form";
-// import { ResultsTabs } from "@/components/results-tabs";
-// import { SessionManager } from "@/lib/session-manager";
-// import { Card } from "@/components/ui/card";
-
-// export default function HomePage() {
-//   const [results, setResults] = useState<any>(null);
-//   const [analysis, setAnalysis] = useState<string>("");
-//   const [mermaidCode, setMermaidCode] = useState<string>("");
-//   const [loading, setLoading] = useState(false);
-//   const [sessionManager] = useState(() => new SessionManager());
-
-//   const handleSearch = async (searchParams: any) => {
-//     setLoading(true);
-//     try {
-//       // Ensure session exists
-//       await sessionManager.ensureSession();
-
-//       setResults(null);
-//       setAnalysis("");
-//       setMermaidCode("");
-//       // Send query using the session manager
-//       const events = await sessionManager.sendQuery(searchParams);
-
-//       console.log("Search events received:", events);
-
-//       const logs = events[1]?.content?.parts?.flatMap((part: any, i: number) => {
-//         try {
-//           const rawText = part.functionResponse?.response?.result?.content?.[0]?.text;
-//           console.log(`Raw search result [${i}]:`, rawText);
-
-//           if (!rawText) return [];
-
-//           const parsed = JSON.parse(rawText);
-//           console.log(`Parsed search result [${i}]:`, parsed);
-
-//           // Return hits or empty
-//           return parsed?.hits?.hits || [];
-//         } catch (error) {
-//           console.error("Failed to parse log entry:", error, part);
-//           return [];
-//         }
-//       }) || [];
-
-//       console.log("Final combined logs:", logs);
-
-
-
-
-//       setResults(logs);
-
-//       console.log("Search results:", logs);
-
-//       console.log("Results count:", logs?.length);
-
-//       const analysis = events[3]?.content?.parts?.[0]?.text;
-//       setAnalysis(analysis);
-
-//       const mermaidCode = events[4]?.content?.parts?.[0]?.text;
-//       setMermaidCode(mermaidCode);
-//     } catch (error) {
-//       console.error("Search failed:", error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     // div strectch to full height and width no scrollbars
-//     <div className="h-screen flex flex-row gap-0 overflow-hidden">
-//       <div className="w-1/4 p-3">
-//         <SearchForm onSearch={handleSearch} loading={loading} />
-//       </div>
-//       <div className="flex flex-1 p-3">
-//         <Card className="border-gray-200 flex flex-1 items-center justify-center">
-//           {!results && !loading && (
-//             <div className="mt-12 text-center text-gray-500">
-//               Start searching :)
-//             </div>
-//           )}
-
-//           {loading && (
-//             <div className="mt-12 text-center text-gray-500">
-//               Loading results...
-//             </div>
-//           )}
-
-//           {results && results.length === 0 && !loading && (
-//             <div className="mt-12 text-center text-gray-500">
-//               No results found for your query :(
-//             </div>
-//           )}
-
-//           {results && analysis && mermaidCode && results.length > 0 && (
-//             <ResultsTabs
-//               results={results}
-//               analysis={analysis}
-//               mermaidCode={mermaidCode}
-//             />
-//           )}
-//         </Card>
-//       </div>
-//     </div>
-//   );
-// }
