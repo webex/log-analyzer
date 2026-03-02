@@ -3,14 +3,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnalysisView } from "@/components/analysis-view"
 import { ChartsView } from "@/components/charts-view"
 import { LogsView } from "@/components/logs-view"
+import { ChatView } from "@/components/chat-view"
 
 interface ResultsTabsProps {
   results: any
   analysis: string
   mermaidCode: string
+  chatResponse: string
 }
 
-export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps) {
+export function ResultsTabs({ results, analysis, mermaidCode , chatResponse}: ResultsTabsProps) {
   console.log("ResultsTabs received mermaidCode:", mermaidCode); // Debug log
   
   return (
@@ -41,6 +43,11 @@ export function ResultsTabs({ results, analysis, mermaidCode }: ResultsTabsProps
       <TabsContent value="charts" className="h-full overflow-y-auto">
         <ChartsView plantUMLCode={mermaidCode} />
       </TabsContent>
+
+      <TabsContent value="chat" className="h-full overflow-y-auto">
+        <ChatView chatResponse={chatResponse} />
+      </TabsContent>
+      
     </Tabs>
     </div>
     
