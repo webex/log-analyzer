@@ -35,6 +35,7 @@ They may be EMPTY if no search has been run yet.
   Raw Mobius logs                     : {mobius_logs}
   Raw SSE/MSE logs                   : {sse_mse_logs}
   Raw WxCAS logs                     : {wxcas_logs}
+  SDK/Client logs (uploaded)          : {sdk_logs}
 
 ================================================================
 RULE 0 — CONTEXT TRACKING (READ THIS FIRST)

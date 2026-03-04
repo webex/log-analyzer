@@ -250,6 +250,9 @@ Use the **architecture_endpoints_skill** for service roles, signaling/media path
 1. **Mobius logs** from {{{{mobius_logs}}}} (logstash-wxm-app indexes) — HTTP/WebSocket signaling, SIP translation, device registration
 2. **SSE/MSE logs** from {{{{sse_mse_logs}}}} (logstash-wxcalling indexes) — SIP edge signaling, media relay
 3. **WxCAS logs** from {{{{wxcas_logs}}}} (logstash-wxcalling indexes) — Call routing, destination resolution, application server logic
+4. **SDK/Client logs** from {{{{sdk_logs}}}} (uploaded by user) — Client-side SDK perspective (browser/app WebRTC logs)
+
+When SDK/Client logs are present, these provide the browser/app perspective. Correlate with server-side logs when both are available.
 
 **Cross-source correlation is CRITICAL:**
 - The SAME call appears in multiple log sources with different perspectives
@@ -257,6 +260,7 @@ Use the **architecture_endpoints_skill** for service roles, signaling/media path
 - Mobius logs show the browser↔server HTTP side
 - SSE logs show the SIP signaling side of the same events
 - WxCAS logs show routing decisions
+- SDK logs show the client-side WebRTC/SDK perspective
 - Present a UNIFIED view that stitches together all perspectives
 
 Because the search was exhaustive (BFS), you may see logs from MULTIPLE call legs,
@@ -290,6 +294,9 @@ Use the **architecture_endpoints_skill** for service roles and Contact Center ar
 1. **Mobius logs** from {{{{mobius_logs}}}} (logstash-wxm-app indexes) — HTTP/WebSocket signaling, SIP translation
 2. **SSE/MSE logs** from {{{{sse_mse_logs}}}} (logstash-wxcalling indexes) — SIP edge signaling, media relay
 3. **WxCAS logs** from {{{{wxcas_logs}}}} (logstash-wxcalling indexes) — Call routing logic
+4. **SDK/Client logs** from {{{{sdk_logs}}}} (uploaded by user) — Client-side SDK perspective
+
+When SDK/Client logs are present, these provide the browser/app perspective. Correlate with server-side logs when both are available.
 
 **Cross-source correlation is CRITICAL:**
 - The SAME call appears in multiple log sources with different perspectives
@@ -310,10 +317,17 @@ forwarded sessions, or related interactions. Identify and correlate ALL of them.
 # Coordinator: Routes to calling or contact center based on serviceIndicator
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
+def _ensure_state_defaults(callback_context) -> None:
+    """Guarantee optional state keys exist so {var} references don't KeyError."""
+    callback_context.state.setdefault("sdk_logs", "")
+
+
 analyze_agent = LlmAgent(
     name="analyze_agent_v2",
     output_key="analyze_results",
     model=_make_model(),
+    before_agent_callback=_ensure_state_defaults,
     instruction="""
 Context: You are analyzing logs from a WebRTC Calling or contact center flow,
 which involves talking to different endpoints using protocols like HTTP, SIP,
@@ -324,6 +338,7 @@ You have access to the full search results from an exhaustive BFS search:
 - Mobius logs: {mobius_logs}
 - SSE/MSE logs: {sse_mse_logs}
 - WxCAS logs: {wxcas_logs}
+- SDK/Client logs: {sdk_logs}
 
 Use `serviceIndicator` from logs to classify the session:
 - `calling`, `guestCalling` → WebRTC Calling Flow, transfer to `calling_agent`

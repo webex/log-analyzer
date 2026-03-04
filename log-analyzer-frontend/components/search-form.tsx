@@ -16,6 +16,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Play, Bot } from "lucide-react";
+import { FileUpload } from "@/components/file-upload";
 
 interface SearchFormProps {
   onSearch: (params: any) => void;
@@ -82,6 +83,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>([]);
   const [detailedAnalysis, setDetailedAnalysis] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; content: string } | null>(null);
 
   const handleServiceChange = (service: string, checked: boolean) => {
     if (checked) {
@@ -110,7 +112,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let searchParams = {
+    let searchParams: any = {
       llm,
       searchValue: searchValue.trim(),
       searchField,
@@ -120,6 +122,10 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
       timeFilter,
       detailedAnalysis,
     };
+
+    if (uploadedFile) {
+      searchParams.uploadedFile = uploadedFile;
+    }
 
     onSearch(searchParams);
   };
@@ -133,7 +139,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col gap-4">
             {/* Search Field Selector */}
             <div className="space-y-2">
@@ -296,6 +302,9 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
             </div>
           </div>
 
+          {/* SDK Log File Upload */}
+          <FileUpload onFileSelect={setUploadedFile} disabled={loading} />
+
           {/* Search Input */}
           <div className="space-y-2">
             <Label htmlFor="searchValue" className="text-black font-medium">
@@ -307,11 +316,10 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
               onChange={(e) => setSearchValue(e.target.value)}
               placeholder="Enter tracking ID or search value..."
               className="border-gray-300"
-              required
             />
             <Button
               type="submit"
-              disabled={loading || !searchField || !searchValue}
+              disabled={loading || (!uploadedFile && (!searchField || !searchValue))}
               className="bg-[#00BCEBFF] text-white hover:bg-[#00BCEB99] px-6 w-full"
             >
               {loading ? (

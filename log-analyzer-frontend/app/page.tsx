@@ -21,8 +21,16 @@ const FIELD_LABELS: Record<string, string> = {
 }
 
 function formatSearchLabel(params: any): string {
-  const field = FIELD_LABELS[params.searchField] || params.searchField
-  const parts = [`${field}: ${params.searchValue}`]
+  const parts: string[] = []
+
+  if (params.searchField && params.searchValue) {
+    const field = FIELD_LABELS[params.searchField] || params.searchField
+    parts.push(`${field}: ${params.searchValue}`)
+  }
+
+  if (params.uploadedFile) {
+    parts.push(`Uploaded: ${params.uploadedFile.name}`)
+  }
 
   const envLabels = (params.environments || []).map((e: string) =>
     e === "prod" ? "Production" : "Integration"
@@ -32,7 +40,7 @@ function formatSearchLabel(params: any): string {
   const regions = (params.regions || []).map((r: string) => r.toUpperCase())
   if (regions.length) parts.push(regions.join(", "))
 
-  return parts.join(" · ")
+  return parts.join(" · ") || "Analysis"
 }
 
 function extractChatResponse(events: any[]): string {
@@ -150,7 +158,7 @@ export default function HomePage() {
 
   return (
     <div className="h-screen flex flex-row gap-0 overflow-hidden">
-      <div className="w-1/4 p-3">
+      <div className="w-1/4 p-3 overflow-y-auto">
         <SearchForm onSearch={handleSearch} loading={loading} />
       </div>
       <div className="flex flex-1 p-3">

@@ -14,6 +14,8 @@ env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 from root_agent_v2.agent import root_agent as pipeline
+from analyze_agent_v2.agent import analyze_agent
+from visualAgent.agent import sequence_diagram_agent
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +30,14 @@ STATE_DEFAULTS = {
     "latest_search_results": "",
     "analyze_results": "",
     "sequence_diagram": "",
+    "sdk_logs": "",
 }
 
 PIPELINE_STATE_KEYS = [
     "mobius_logs", "sse_mse_logs", "wxcas_logs", "all_logs",
     "search_summary", "parsed_query", "extracted_ids",
     "latest_search_results", "analyze_results", "sequence_diagram",
+    "sdk_logs",
 ]
 
 # ── Intent parser (LlmAgent used internally, output never shown to user) ─────
@@ -53,10 +57,12 @@ You ONLY output a raw JSON object. No markdown. No explanation. No text.
 ================================================================
 TASK
 ================================================================
-Classify the user's CURRENT message as one of three intents:
+Classify the user's CURRENT message as one of four intents:
   "search"    — the user provides a concrete identifier to look up
   "re_search" — the user wants to re-run a PREVIOUS search with different parameters
                 (environment, region, detail level) but does NOT supply a new ID
+  "upload"    — the user wants to analyze uploaded SDK/client logs (e.g. "analyze these logs",
+                "look at the uploaded logs", "what do the SDK logs show") when sdk_logs are in state
   "chat"      — anything else (questions, explanations, comparisons, follow-ups)
 
 ================================================================
@@ -190,6 +196,13 @@ Message: "what was the root cause?"
 Message: "hello"
 → {"intent": "chat"}
 
+Message: "analyze these logs"
+→ {"intent": "upload"}
+(User wants to analyze uploaded SDK logs.)
+
+Message: "what do the uploaded logs show?"
+→ {"intent": "upload"}
+
 Message: "search for the same thing"
 → {"intent": "chat"}
 (Vague. No parameter change specified. User can rephrase.)
@@ -220,7 +233,7 @@ class QueryAnalyzerAgent(BaseAgent):
         super().__init__(
             name="query_analyzer",
             intent_parser=intent_parser,
-            sub_agents=[intent_parser, pipeline],
+            sub_agents=[intent_parser, pipeline, analyze_agent, sequence_diagram_agent],
         )
 
     # ── Fast path: structured JSON ───────────────────────────────
@@ -228,10 +241,18 @@ class QueryAnalyzerAgent(BaseAgent):
     def _parse_json_search(self, message: str) -> dict | None:
         try:
             params = json.loads(message)
-            if (isinstance(params, dict)
-                    and params.get("searchValue")
-                    and params.get("searchField")):
+            if not isinstance(params, dict):
+                return None
+            has_search = params.get("searchValue") and params.get("searchField")
+            has_upload = params.get("uploadedFile")
+            if has_search:
                 return params
+            if has_upload:
+                return {
+                    "type": "upload_only",
+                    "sdk_logs": has_upload.get("content", ""),
+                    "fileName": has_upload.get("name", ""),
+                }
         except (json.JSONDecodeError, TypeError):
             pass
         return None
@@ -327,9 +348,13 @@ class QueryAnalyzerAgent(BaseAgent):
         # ── Step 4: decide whether to run pipeline ───────────────
         has_results = bool(ctx.session.state.get("analyze_results"))
         needs_pipeline = False
+        upload_only = False
 
         if search_params is not None:
-            if from_frontend and has_results and self._is_same_search(search_params, ctx):
+            if search_params.get("type") == "upload_only":
+                needs_pipeline = True
+                upload_only = True
+            elif from_frontend and has_results and self._is_same_search(search_params, ctx):
                 logger.info("[query_analyzer] Same JSON params from frontend — skipping pipeline")
             else:
                 needs_pipeline = True
@@ -340,12 +365,29 @@ class QueryAnalyzerAgent(BaseAgent):
         if needs_pipeline:
             for key in PIPELINE_STATE_KEYS:
                 ctx.session.state.pop(key, None)
-            ctx.session.state["last_search_params"] = json.dumps(
-                search_params, sort_keys=True
-            )
-            logger.info("[query_analyzer] Running pipeline")
-            async for event in pipeline.run_async(ctx):
-                yield event
+            # Ensure sdk_logs always has a default so agent instructions
+            # referencing {sdk_logs} don't raise KeyError when no file is uploaded.
+            ctx.session.state["sdk_logs"] = ""
+
+            # Store SDK logs if uploaded
+            if upload_only:
+                ctx.session.state["sdk_logs"] = search_params.get("sdk_logs", "")
+                logger.info("[query_analyzer] Upload-only mode — skipping search, running analyze + visualize")
+                async for event in analyze_agent.run_async(ctx):
+                    yield event
+                async for event in sequence_diagram_agent.run_async(ctx):
+                    yield event
+            else:
+                uploaded = search_params.get("uploadedFile")
+                if uploaded:
+                    ctx.session.state["sdk_logs"] = uploaded.get("content", "")
+                    logger.info("[query_analyzer] SDK logs uploaded alongside search")
+                ctx.session.state["last_search_params"] = json.dumps(
+                    search_params, sort_keys=True
+                )
+                logger.info("[query_analyzer] Running pipeline")
+                async for event in pipeline.run_async(ctx):
+                    yield event
         else:
             logger.info("[query_analyzer] Skipping pipeline — passing to chat_agent")
             return
