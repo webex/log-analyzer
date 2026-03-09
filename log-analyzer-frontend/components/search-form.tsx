@@ -15,12 +15,14 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Play, Bot } from "lucide-react";
+import { Play, Bot, LogIn, CheckCircle2, AlertCircle } from "lucide-react";
 import { FileUpload } from "@/components/file-upload";
 
 interface SearchFormProps {
   onSearch: (params: any) => void;
   loading: boolean;
+  isAuthenticated: boolean;
+  authError?: string;
 }
 
 const SEARCH_FIELDS = [
@@ -74,7 +76,7 @@ const LLMS = [
   // { value: "gemini", label: "Gemini" },
 ];
 
-export function SearchForm({ onSearch, loading }: SearchFormProps) {
+export function SearchForm({ onSearch, loading, isAuthenticated, authError }: SearchFormProps) {
   const [searchValue, setSearchValue] = useState("");
   const [searchField, setSearchField] = useState("");
   const [timeFilter, setTimeFilter] = useState("");
@@ -112,7 +114,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let searchParams: any = {
+    const searchParams: any = {
       llm,
       searchValue: searchValue.trim(),
       searchField,
@@ -130,6 +132,10 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
     onSearch(searchParams);
   };
 
+  const handleWebexLogin = () => {
+    window.location.href = "/api/auth/login";
+  };
+
   return (
     <Card className="border-gray-200 min-h-full">
       <CardHeader>
@@ -141,6 +147,35 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col gap-4">
+            {/* Webex OAuth Login */}
+            <div className="space-y-2">
+              <Label className="text-black font-medium">Authentication</Label>
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-md">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                  <span className="text-sm text-green-700 font-medium">Signed in with Webex</span>
+                </div>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    onClick={handleWebexLogin}
+                    disabled={loading}
+                    className="w-full bg-black text-white hover:bg-gray-800 flex items-center justify-center gap-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Sign in with Webex
+                  </Button>
+                  {authError && (
+                    <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                      <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                      <span className="text-xs text-red-600">{authError}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
             {/* Search Field Selector */}
             <div className="space-y-2">
               <Label htmlFor="searchField" className="text-black font-medium">
@@ -319,7 +354,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
             />
             <Button
               type="submit"
-              disabled={loading || (!uploadedFile && (!searchField || !searchValue))}
+              disabled={loading || !isAuthenticated || (!uploadedFile && (!searchField || !searchValue))}
               className="bg-[#00BCEBFF] text-white hover:bg-[#00BCEB99] px-6 w-full"
             >
               {loading ? (

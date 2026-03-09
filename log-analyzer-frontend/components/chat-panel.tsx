@@ -16,6 +16,7 @@ export interface ChatMessage {
 interface ChatPanelProps {
   messages: ChatMessage[]
   loading: boolean
+  chatDisabled?: boolean
   onSendMessage: (message: string) => void
   onStop: () => void
 }
@@ -81,7 +82,7 @@ const markdownComponents = {
   ),
 }
 
-export function ChatPanel({ messages, loading, onSendMessage, onStop }: ChatPanelProps) {
+export function ChatPanel({ messages, loading, chatDisabled, onSendMessage, onStop }: ChatPanelProps) {
   const [input, setInput] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -92,7 +93,7 @@ export function ChatPanel({ messages, loading, onSendMessage, onStop }: ChatPane
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = input.trim()
-    if (!trimmed || loading) return
+    if (!trimmed || loading || chatDisabled) return
     onSendMessage(trimmed)
     setInput("")
   }
@@ -116,12 +117,13 @@ export function ChatPanel({ messages, loading, onSendMessage, onStop }: ChatPane
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question or paste a tracking ID..."
+              placeholder={chatDisabled ? "Sign in with Webex to chat..." : "Ask a question or paste a tracking ID..."}
+              disabled={chatDisabled}
               className="border-gray-300 text-sm"
             />
             <Button
               type="submit"
-              disabled={!input.trim()}
+              disabled={chatDisabled || !input.trim()}
               className="bg-[#00BCEB] text-white hover:bg-[#00BCEB99] px-4"
             >
               <Send className="h-4 w-4" />
@@ -204,8 +206,8 @@ export function ChatPanel({ messages, loading, onSendMessage, onStop }: ChatPane
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about the analysis..."
-            disabled={loading}
+              placeholder={chatDisabled ? "Sign in with Webex to chat..." : "Ask about the analysis..."}
+            disabled={loading || chatDisabled}
             className="border-gray-300 text-sm"
           />
           {loading ? (
@@ -219,7 +221,7 @@ export function ChatPanel({ messages, loading, onSendMessage, onStop }: ChatPane
           ) : (
             <Button
               type="submit"
-              disabled={!input.trim()}
+              disabled={chatDisabled || !input.trim()}
               className="bg-[#00BCEB] text-white hover:bg-[#00BCEB99] px-4"
             >
               <Send className="h-4 w-4" />

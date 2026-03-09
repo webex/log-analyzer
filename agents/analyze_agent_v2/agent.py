@@ -32,7 +32,7 @@ load_dotenv(dotenv_path=env_path)
 def _make_model() -> LiteLlm:
     return LiteLlm(
         model="openai/gpt-4.1",
-        api_key=os.environ["AZURE_OPENAI_API_KEY"],
+        api_key=os.environ.get("OPENAI_API_KEY") or os.environ.get("AZURE_OPENAI_API_KEY") or "pending-oauth",
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     )
@@ -230,6 +230,11 @@ architecture_endpoints_skill = load_skill_from_dir(
 )
 architecture_skill_toolset = skill_toolset.SkillToolset(skills=[architecture_endpoints_skill])
 
+sip_flow_skill = load_skill_from_dir(
+    Path(__file__).parent / "skills" / "sip_flow_skill"
+)
+sip_flow_skill_toolset = skill_toolset.SkillToolset(skills=[sip_flow_skill])
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Sub-agent: WebRTC Calling flow
@@ -239,12 +244,13 @@ calling_agent = LlmAgent(
     model=_make_model(),
     name="calling_agent",
     output_key="analyze_results",
-    tools=[mobius_skill_toolset, architecture_skill_toolset],
+    tools=[mobius_skill_toolset, architecture_skill_toolset, sip_flow_skill_toolset],
     instruction=f"""You are a senior VoIP/WebRTC debugging expert with deep expertise in HTTP, WebRTC, SIP, SDP, RTP, SRTP, DTLS, ICE, TCP, UDP, TLS, and related protocols. You produce EXHAUSTIVE, production-grade debug analyses that leave no log entry unexamined.
 
 {_SEARCH_CONTEXT_PREAMBLE}
 
 Use the **architecture_endpoints_skill** for service roles, signaling/media paths, and WebRTC Calling architecture (see references/architecture_and_endpoints.md — endpoints and WebRTC Calling sections).
+Use the **sip_flow_skill** for SIP message sequences, response code meanings, SDP negotiation details, SIP timers, and common failure patterns (see references/sip_flows.md).
 
 **Log Sources — Analyze ALL of them thoroughly:**
 1. **Mobius logs** from {{{{mobius_logs}}}} (logstash-wxm-app indexes) — HTTP/WebSocket signaling, SIP translation, device registration
@@ -283,12 +289,13 @@ contact_center_agent = LlmAgent(
     model=_make_model(),
     name="contact_center_agent",
     output_key="analyze_results",
-    tools=[architecture_skill_toolset],
+    tools=[architecture_skill_toolset, sip_flow_skill_toolset],
     instruction=f"""You are a senior VoIP/Contact Center debugging expert with deep expertise in HTTP, WebRTC, SIP, SDP, RTP, SRTP, DTLS, ICE, TCP, UDP, TLS, and related protocols. You produce EXHAUSTIVE, production-grade debug analyses that leave no log entry unexamined.
 
 {_SEARCH_CONTEXT_PREAMBLE}
 
 Use the **architecture_endpoints_skill** for service roles and Contact Center architecture (see references/architecture_and_endpoints.md — endpoints and Contact Center sections).
+Use the **sip_flow_skill** for SIP message sequences, response code meanings, SDP negotiation details, SIP timers, and common failure patterns (see references/sip_flows.md).
 
 **Log Sources — Analyze ALL of them thoroughly:**
 1. **Mobius logs** from {{{{mobius_logs}}}} (logstash-wxm-app indexes) — HTTP/WebSocket signaling, SIP translation

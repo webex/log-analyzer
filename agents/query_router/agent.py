@@ -9,6 +9,7 @@ from google.adk.agents import BaseAgent, LlmAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
 from google.adk.models.lite_llm import LiteLlm
+from google.genai import types
 
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -45,7 +46,7 @@ intent_parser = LlmAgent(
     name="intent_parser",
     model=LiteLlm(
         model="openai/gpt-4.1-mini",
-        api_key=os.environ["AZURE_OPENAI_API_KEY"],
+        api_key=os.environ.get("OPENAI_API_KEY") or os.environ.get("AZURE_OPENAI_API_KEY") or "pending-oauth",
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),
@@ -233,8 +234,24 @@ class QueryAnalyzerAgent(BaseAgent):
         super().__init__(
             name="query_analyzer",
             intent_parser=intent_parser,
-            sub_agents=[intent_parser, pipeline, analyze_agent, sequence_diagram_agent],
+            sub_agents=[intent_parser, pipeline],
         )
+
+    @staticmethod
+    def _propagate_api_key(token: str) -> None:
+        """Update api_key on all LiteLlm model instances in the pipeline at runtime."""
+        from chat_agent.agent import chat_agent
+
+        agents_to_update = [intent_parser, chat_agent]
+        for sub in pipeline.sub_agents:
+            agents_to_update.append(sub)
+            if hasattr(sub, "sub_agents"):
+                agents_to_update.extend(sub.sub_agents)
+
+        for agent in agents_to_update:
+            model = getattr(agent, "model", None)
+            if model and hasattr(model, "_additional_args"):
+                model._additional_args["api_key"] = token
 
     # ── Fast path: structured JSON ───────────────────────────────
 
@@ -313,9 +330,36 @@ class QueryAnalyzerAgent(BaseAgent):
     async def _run_async_impl(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
-        # ── Step 1: initialize missing state defaults ────────────
+        # ── Step 0: initialize missing state defaults (must run before any early return
+        #    so that chat_agent's instruction templates can resolve) ────────────
         for key, default in STATE_DEFAULTS.items():
             ctx.session.state.setdefault(key, default)
+
+        # ── Step 1: set OAuth token from session state ───────────
+        oauth_token = ctx.session.state.get("oauth_token", "")
+        logger.info(f"[query_router] oauth_token from session: {'yes (' + str(len(oauth_token)) + ' chars)' if oauth_token else 'EMPTY'}")
+        if oauth_token:
+            os.environ["AZURE_OPENAI_API_KEY"] = oauth_token
+            os.environ["OPENAI_API_KEY"] = oauth_token
+
+            import litellm as _litellm
+            _litellm.api_key = oauth_token
+            _litellm.openai_key = oauth_token
+
+            from dotenv import load_dotenv as _reload_dotenv
+            os.environ["AZURE_OPENAI_API_KEY"] = oauth_token
+            os.environ["OPENAI_API_KEY"] = oauth_token
+
+            self._propagate_api_key(oauth_token)
+            logger.info(f"[query_router] Token propagated to env, litellm global, and all agent models")
+        elif not os.environ.get("AZURE_OPENAI_API_KEY"):
+            yield Event(
+                author=self.name,
+                content=types.Content(
+                    parts=[types.Part(text="No OAuth token provided. Please sign in with Webex and try again.")]
+                ),
+            )
+            return
 
         # ── Step 2: extract user message ─────────────────────────
         user_message = ""

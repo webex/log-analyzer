@@ -24,6 +24,8 @@ from typing import Any, AsyncGenerator, Optional
 from typing_extensions import override
 
 from dotenv import load_dotenv
+import litellm
+from google.genai import types as genai_types
 from google.adk.agents import LlmAgent, BaseAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
@@ -446,8 +448,8 @@ EXTRACTOR_KEY_TO_ID_TYPE = {
     "trace_ids": "trace_id",
 }
 
-# Temporary: stop BFS once we've collected this many logs total
-MAX_TOTAL_LOGS = 1000
+# Chunk size for map-reduce ID extraction (entries per LLM call)
+MAPREDUCE_CHUNK_SIZE = 200
 
 # Regex for SSE Call-ID pattern in SIP message bodies
 SSE_CALLID_PATTERN = re.compile(r"SSE\d+@[\d.]+")
@@ -492,6 +494,95 @@ def _parse_json_from_llm(raw: Any) -> dict:
             logger.debug(f"[_parse_json_from_llm] Brace extraction failed: {e}")
     logger.warning(f"[_parse_json_from_llm] All parse attempts failed. Raw preview: {raw[:200]}")
     return {}
+
+
+async def _extract_ids_mapreduce(
+    condensed: list[dict],
+    instruction: str,
+) -> dict:
+    """
+    Map-reduce ID extraction: split condensed log entries into chunks,
+    call the LLM in parallel for each chunk, then merge results.
+    """
+    id_keys = [
+        "session_ids", "tracking_ids", "mobius_call_ids", "sip_call_ids",
+        "sse_call_ids", "call_ids", "user_ids", "device_ids", "trace_ids",
+    ]
+
+    if not condensed:
+        return {k: [] for k in id_keys}
+
+    # Split into chunks
+    chunks = []
+    for i in range(0, len(condensed), MAPREDUCE_CHUNK_SIZE):
+        chunks.append(condensed[i : i + MAPREDUCE_CHUNK_SIZE])
+
+    logger.info(
+        f"[_extract_ids_mapreduce] Splitting {len(condensed)} entries "
+        f"into {len(chunks)} chunks of ~{MAPREDUCE_CHUNK_SIZE}"
+    )
+
+    # Build litellm call params from environment (mirrors _make_model)
+    api_key = (
+        os.environ.get("OPENAI_API_KEY")
+        or os.environ.get("AZURE_OPENAI_API_KEY")
+        or "pending-oauth"
+    )
+    api_base = os.environ["AZURE_OPENAI_ENDPOINT"]
+
+    async def _call_chunk(chunk: list[dict], chunk_idx: int) -> dict:
+        user_content = json.dumps(chunk, default=str)
+        logger.debug(
+            f"[_extract_ids_mapreduce] Chunk {chunk_idx}: "
+            f"{len(chunk)} entries, ~{len(user_content)} chars"
+        )
+        try:
+            response = await litellm.acompletion(
+                model="openai/gpt-4.1",
+                api_key=api_key,
+                api_base=api_base,
+                extra_headers={"x-cisco-app": "microservice-log-analyzer"},
+                messages=[
+                    {"role": "system", "content": instruction},
+                    {"role": "user", "content": user_content},
+                ],
+                temperature=0,
+            )
+            raw = response.choices[0].message.content
+            parsed = _parse_json_from_llm(raw)
+            logger.info(
+                f"[_extract_ids_mapreduce] Chunk {chunk_idx} returned "
+                f"{sum(len(v) for v in parsed.values() if isinstance(v, list))} IDs"
+            )
+            return parsed
+        except Exception as e:
+            logger.error(
+                f"[_extract_ids_mapreduce] Chunk {chunk_idx} failed: {e}"
+            )
+            return {}
+
+    # Map phase: call all chunks in parallel
+    chunk_results = await asyncio.gather(
+        *[_call_chunk(chunk, i) for i, chunk in enumerate(chunks)]
+    )
+
+    # Reduce phase: merge and deduplicate
+    merged: dict[str, list[str]] = {k: [] for k in id_keys}
+    seen: dict[str, set[str]] = {k: set() for k in id_keys}
+    for result in chunk_results:
+        for key in id_keys:
+            vals = result.get(key, [])
+            if isinstance(vals, str):
+                vals = [vals]
+            for v in vals:
+                v = str(v).strip()
+                if v and v not in seen[key]:
+                    seen[key].add(v)
+                    merged[key].append(v)
+
+    total = sum(len(v) for v in merged.values())
+    logger.info(f"[_extract_ids_mapreduce] Merged result: {total} unique IDs")
+    return merged
 
 
 def resolve_indexes(
@@ -677,7 +768,7 @@ def extract_id_fields_for_llm(hits: list[dict]) -> list[dict]:
             "timestamp": source.get("@timestamp"),
             "tags": source.get("tags"),
             # Truncate long SIP messages — SSE Call-IDs are in headers (first ~500 chars)
-            "message": (source.get("message") or "")[:1500],
+            "message": source.get("message") or "",
         }
         # Nested ID fields (Mobius log structure: _source.fields.<name>)
         for id_field in (
@@ -720,7 +811,7 @@ def extract_id_fields_for_llm(hits: list[dict]) -> list[dict]:
 def _make_model() -> LiteLlm:
     return LiteLlm(
         model="openai/gpt-4.1",
-        api_key=os.environ["AZURE_OPENAI_API_KEY"],
+        api_key=os.environ.get("OPENAI_API_KEY") or os.environ.get("AZURE_OPENAI_API_KEY") or "pending-oauth",
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     )
@@ -986,15 +1077,6 @@ class ExhaustiveSearchAgent(BaseAgent):
                 )
                 break
 
-            # Check total log count
-            total_log_count = sum(len(v) for v in all_logs.values())
-            if total_log_count >= MAX_TOTAL_LOGS:
-                logger.info(
-                    f"[{self.name}] Reached {total_log_count} logs (limit {MAX_TOTAL_LOGS}), stopping BFS"
-                )
-                print(f"  ⛔ Reached {total_log_count} logs (limit {MAX_TOTAL_LOGS}), stopping BFS")
-                break
-
             current_batch: list[tuple[str, str]] = []
             while frontier and frontier[0][2] == current_depth:
                 id_val, id_type, depth = frontier.popleft()
@@ -1165,26 +1247,27 @@ class ExhaustiveSearchAgent(BaseAgent):
                             f"for time range: {e}"
                         )
 
-            # ── 3e: Extract IDs — LLM only ──
+            # ── 3e: Extract IDs — LLM map-reduce ──
             condensed = extract_id_fields_for_llm(batch_hits)
 
             state_payload = json.dumps(condensed, default=str)
             ctx.session.state["latest_search_results"] = state_payload
 
+            n_chunks = max(1, (len(condensed) + MAPREDUCE_CHUNK_SIZE - 1) // MAPREDUCE_CHUNK_SIZE)
             logger.info(
-                f"[{self.name}] Running LLM ID extractor on "
-                f"{len(condensed)} log entries..."
+                f"[{self.name}] Running map-reduce ID extraction on "
+                f"{len(condensed)} entries ({n_chunks} chunks)..."
             )
-            print(f"  🧠 Running LLM extraction on {len(condensed)} entries...")
-            async for event in self.id_extractor.run_async(ctx):
-                logger.debug(
-                    f"[{self.name}] id_extractor event: "
-                    f"author={event.author}, is_final={event.is_final_response()}"
-                )
-                yield event
+            print(f"  🧠 Running LLM extraction on {len(condensed)} entries ({n_chunks} chunks)...")
 
-            raw_extracted = ctx.session.state.get("extracted_ids", "{}")
-            extracted = _parse_json_from_llm(raw_extracted)
+            extracted = await _extract_ids_mapreduce(
+                condensed,
+                instruction=self.id_extractor.instruction,
+            )
+
+            # Store in session state so downstream agents can see it
+            ctx.session.state["extracted_ids"] = json.dumps(extracted, default=str)
+
             total_ids = sum(
                 len(v) for v in extracted.values() if isinstance(v, list)
             )
@@ -1192,6 +1275,16 @@ class ExhaustiveSearchAgent(BaseAgent):
             for key, vals in extracted.items():
                 if vals:
                     print(f"  🧠 {key}: {len(vals)} — {vals}")
+
+            # Yield a synthetic event so downstream agents see the extraction
+            yield Event(
+                author=self.name,
+                invocation_id=ctx.invocation_id,
+                content=genai_types.Content(
+                    parts=[genai_types.Part(text=json.dumps(extracted, default=str))],
+                    role="model",
+                ),
+            )
 
             # ── 3f: Add new IDs to frontier ──
             logger.debug(f"[{self.name}] Processing extracted IDs: {json.dumps({k: v for k, v in extracted.items() if v}, default=str)}")

@@ -16,11 +16,6 @@ from chat_agent.agent import chat_agent
 from query_router.agent import query_router
 
 
-from oauth_manager import get_token_manager_machine
-
-oauth_manager = get_token_manager_machine()
-oauth_manager.initialize()
-
 # ═══════════════════════════════════════════════════════════════════════════════
 # Root Agent
 # ═══════════════════════════════════════════════════════════════════════════════

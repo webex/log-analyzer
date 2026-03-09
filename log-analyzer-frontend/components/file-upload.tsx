@@ -17,7 +17,7 @@ interface FileUploadProps {
   disabled: boolean;
 }
 
-const ACCEPTED_EXTENSIONS = [".json", ".xml", ".txt", ".log"];
+const ACCEPTED_EXTENSIONS = [".json", ".xml", ".txt", ".log", ".har"];
 const ACCEPT_STRING = ACCEPTED_EXTENSIONS.join(",");
 
 function formatFileSize(bytes: number): string {
@@ -112,7 +112,7 @@ export function FileUpload({ onFileSelect, disabled }: FileUploadProps) {
             Drop file here or click to browse
           </p>
           <p className="text-xs text-gray-400">
-            .json, .xml, .txt, .log
+            .json, .xml, .txt, .log, .har
           </p>
           <input
             ref={inputRef}

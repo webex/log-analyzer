@@ -7,16 +7,35 @@ function generateId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
+const PIPELINE_STATE_DEFAULTS: Record<string, string> = {
+  mobius_logs: "",
+  sse_mse_logs: "",
+  wxcas_logs: "",
+  all_logs: "",
+  search_summary: "",
+  parsed_query: "",
+  extracted_ids: "",
+  latest_search_results: "",
+  analyze_results: "",
+  sequence_diagram: "",
+  sdk_logs: "",
+}
+
 export class SessionManager {
   private userId: string
   private sessionId: string
   private sessionCreated = false
   private activeController: AbortController | null = null
   private activeTimeout: ReturnType<typeof setTimeout> | null = null
+  private oauthToken: string = ""
 
   constructor() {
     this.userId = generateId("u")
     this.sessionId = generateId("s")
+  }
+
+  setOauthToken(token: string): void {
+    this.oauthToken = token
   }
 
   async ensureSession(): Promise<void> {
@@ -27,13 +46,13 @@ export class SessionManager {
 
     try {
       const response = await fetch(
-        `${ADK_API_URL}/apps/${APP_NAME}/users/${this.userId}/sessions/${this.sessionId}`,
+        `${ADK_API_URL}/apps/${APP_NAME}/users/${this.userId}/sessions`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            initialized: true,
-            timestamp: new Date().toISOString(),
+            sessionId: this.sessionId,
+            state: { ...PIPELINE_STATE_DEFAULTS, oauth_token: this.oauthToken },
           }),
           signal: controller.signal,
         }
@@ -157,7 +176,7 @@ export class SessionManager {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sessionId: this.sessionId,
-            state,
+            state: { ...PIPELINE_STATE_DEFAULTS, ...state, oauth_token: this.oauthToken },
             events,
           }),
           signal: controller.signal,

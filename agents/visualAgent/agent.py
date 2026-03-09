@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=env_path)
 sequence_diagram_agent = Agent(
     model=LiteLlm(
         model="openai/gpt-4.1",
-        api_key=os.environ["AZURE_OPENAI_API_KEY"],
+        api_key=os.environ.get("OPENAI_API_KEY") or os.environ.get("AZURE_OPENAI_API_KEY") or "pending-oauth",
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         extra_headers={"x-cisco-app": "microservice-log-analyzer"},
     ),

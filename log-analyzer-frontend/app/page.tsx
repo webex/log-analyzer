@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { SearchForm } from "@/components/search-form"
 import { ChatPanel, type ChatMessage } from "@/components/chat-panel"
 import { SessionManager } from "@/lib/session-manager"
@@ -66,7 +66,37 @@ function makeId(): string {
 export default function HomePage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
+  const [hasToken, setHasToken] = useState(false)
+  const [oauthToken, setOauthToken] = useState("")
+  const [authError, setAuthError] = useState("")
   const [sessionManager] = useState(() => new SessionManager())
+
+  useEffect(() => {
+    const hash = window.location.hash
+    console.log("[Auth] Page loaded, hash:", hash ? hash.substring(0, 50) + "..." : "(none)")
+    if (!hash) return
+
+    const params = new URLSearchParams(hash.substring(1))
+
+    const token = params.get("access_token")
+    if (token) {
+      console.log("[Auth] Bearer token received, length:", token.length)
+      console.log("[Auth] Token preview:", token.substring(0, 20) + "...")
+      setOauthToken(token)
+      setHasToken(true)
+      sessionManager.setOauthToken(token)
+      console.log("[Auth] Token set in SessionManager, auth complete")
+      window.history.replaceState(null, "", window.location.pathname)
+      return
+    }
+
+    const error = params.get("error")
+    if (error) {
+      console.error("[Auth] OAuth error:", decodeURIComponent(error))
+      setAuthError(decodeURIComponent(error))
+      window.history.replaceState(null, "", window.location.pathname)
+    }
+  }, [sessionManager])
 
   const appendMessage = (role: "user" | "assistant", content: string) => {
     setMessages((prev) => [...prev, { id: makeId(), role, content }])
@@ -108,12 +138,13 @@ export default function HomePage() {
   const handleSearch = async (searchParams: any) => {
     setLoading(true)
     try {
+      const restParams = searchParams
       await sessionManager.ensureSession()
 
-      appendMessage("user", formatSearchLabel(searchParams))
+      appendMessage("user", formatSearchLabel(restParams))
 
       const events = await sessionManager.sendMessage(
-        JSON.stringify(searchParams)
+        JSON.stringify(restParams)
       )
       const response = extractChatResponse(events)
       appendMessage(
@@ -159,13 +190,19 @@ export default function HomePage() {
   return (
     <div className="h-screen flex flex-row gap-0 overflow-hidden">
       <div className="w-1/4 p-3 overflow-y-auto">
-        <SearchForm onSearch={handleSearch} loading={loading} />
+        <SearchForm
+          onSearch={handleSearch}
+          loading={loading}
+          isAuthenticated={hasToken}
+          authError={authError}
+        />
       </div>
       <div className="flex flex-1 p-3">
         <Card className="border-gray-200 flex flex-1 overflow-hidden relative">
           <ChatPanel
             messages={messages}
             loading={loading}
+            chatDisabled={!hasToken}
             onSendMessage={handleSendMessage}
             onStop={handleStop}
           />

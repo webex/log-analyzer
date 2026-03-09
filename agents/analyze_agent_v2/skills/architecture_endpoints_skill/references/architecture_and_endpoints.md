@@ -26,6 +26,76 @@
 
 ---
 
+## High-Level Component Topology (MSE Option with Mobius in WxC)
+
+```
+                                    ┌─────────────────────────────────────────────────┐
+                                    │                 Webex Cloud                      │
+                                    │                                                 │
+                                    │   ┌─────────┐    ┌──────────┐                   │
+                  WebSocket         │   │ Mercury │    │ Webex CI │                   │
+Registered   ┌──────────────────────┼──>│         │    │          │                   │
+User         │                      │   └─────────┘    └──────────┘                   │
+ [Browser    │                      │                                                 │
+  Extension] │                      │        Async events     ┌────────┐              │
+     │       │   REST API (HTTPS)   │            │            │ CXAPI  │              │
+     │       │                      │            ▼            │ 3PCC   │              │
+     │       └──────────────────────┼──> ┌──────────────┐     └───┬────┘              │
+     │                              │    │   Mobius      │        │ Supplementary     │
+     │                              │    │ Micro Service │        │ Services for calls│
+     │  Enterprise                  │    └──────┬───────┘        │                   │
+     │  Web Server                  │           │ Provisioning   │                   │
+     │                              │           │ data query  ┌──┴─────┐   ┌────────┐│
+     │                              │           └────────────>│ CPAPI  │   │ CH UI  ││
+     │                              │                         └────────┘   │(Control││
+     │                              │                                      │  Hub)  ││
+     │                              └──────────────────────────────────────┴────────┘│
+     │                                                                               │
+     │  Media (DTLS-SRTP)           ┌─────────────────────────────────────────────────┐
+     │  STUN consent, ICE           │              Webex Calling                      │
+     │                              │                                                 │
+     │          ┌───────────────────┼──> ┌───────┐  mTLS SIP persistent  ┌─────────┐ │
+     │          │                   │    │  MSE  │  connection w/        │   SSE   │ │
+     │          │                   │    │       │  webRTC domain in     │         │ │
+     │          │                   │    └───┬───┘  cert SAN             └────┬────┘ │
+     │          │                   │        │ RTP                            │       │
+     │          │                   │    ┌───┴───┐                      ┌────┴──────┐│
+     ▼          ▼                   │    │  MSE  │                      │WxC Call   ││
+Peer User  [Peer Device]           │    │       │◄────── RTP ─────────>│Control    ││
+             Media (SRTP)           │    └───────┘                      │(AS/WxCAS)││
+                                    │                                   └────┬──────┘│
+                                    │    ┌───────┐                      ┌────┴──────┐│
+                                    │    │  SSE  │                      │OCI Router ││
+                                    │    └───────┘                      └───────────┘│
+                                    └─────────────────────────────────────────────────┘
+
+Legend:
+  ───────>  signaling
+  ═══════>  media
+  - - - ->  media control done by Mobius
+  [dark]    new components
+  [light]   existing components, need change
+```
+
+### Connection Types Between Components
+
+| From | To | Protocol | Purpose |
+|------|----|----------|---------|
+| Browser/Extension | Mercury | WebSocket | Async event delivery (call notifications, status updates) |
+| Browser/Extension | Mobius | REST API (HTTPS) | Call control signaling (register, call, hold, transfer) |
+| Browser/Extension | MSE | DTLS-SRTP | Encrypted media (audio/video), STUN consent, ICE |
+| Mobius | Mercury | Internal | Async event push to SDK/Client |
+| Mobius | CPAPI | HTTPS | Provisioning data query, user entitlements |
+| Mobius | CXAPI (3PCC) | HTTPS | Supplementary call services |
+| Mobius | SSE | mTLS SIP | SIP signaling (persistent connection, webRTC domain in cert SAN) |
+| MSE | MSE | RTP | Media relay between caller and callee media engines |
+| SSE | WxC Call Control (WxCAS) | SIP | Call routing, destination resolution |
+| WxCAS | OCI Router | Internal | Route OCI requests to correct WxC deployment |
+| Admin | Control Hub (CH UI) | HTTPS | Administration and configuration |
+| Control Hub | CPAPI | HTTPS | Provisioning and configuration |
+
+---
+
 For **WebRTC Calling** flow details (signaling path, media path, call types & routing), see **references/calling_flow.md**.
 
 For **Contact Center** flow details (signaling path, media path, Kamailio/RTMS/RAS, health ping, timers, Kafka failover, inter-regional failover), see **references/contact_center_flow.md**.
