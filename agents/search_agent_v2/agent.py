@@ -1488,6 +1488,12 @@ class ExhaustiveSearchAgent(BaseAgent):
                     skipped_dummy += 1
                     logger.debug(f"[{self.name}]   SKIP NA_ prefix: {extract_key}='{id_val}'")
                     continue
+                # FLAG: Only follow webex-js-sdk tracking IDs for now.
+                # Update this condition to allow other prefixes later.
+                if extract_key == "tracking_ids" and not id_val.startswith("webex-js-sdk_"):
+                    skipped_dummy += 1
+                    logger.debug(f"[{self.name}]   SKIP non-sdk tracking ID: '{id_val}'")
+                    continue
                 if id_val in all_seen_ids:
                     skipped_seen += 1
                     logger.debug(f"[{self.name}]   SKIP already seen: {id_type}='{id_val}'")
@@ -1727,10 +1733,11 @@ class ExhaustiveSearchAgent(BaseAgent):
                 f"in {_search_elapsed:.2f}s"
             )
 
+            all_logs_counts = {k: len(v) for k, v in all_logs.items()}
             logger.info(
                 f"[{self.name}] Depth {current_depth} search phase done: "
                 f"depth_new_hits={depth_new_hits}, derived_time_range={derived_time_range}, "
-                f"all_logs counts={{ {k}: {len(v)} for k, v in all_logs.items() }}, "
+                f"all_logs counts={all_logs_counts}, "
                 f"seen_hit_ids={len(seen_hit_ids)}, budget_stage={budget.remaining_stage()}, "
                 f"budget_run={budget.remaining_run()}"
             )
