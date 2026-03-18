@@ -461,8 +461,10 @@ EXTRACTOR_KEY_TO_ID_TYPE = {
 # Regex for SSE Call-ID pattern in SIP message bodies
 SSE_CALLID_PATTERN = re.compile(r"SSE\d+@[\d.]+")
 
-# Pagination
-PAGE_SIZE = 100
+# Pagination & chunking
+PAGE_SIZE = 500
+ID_EXTRACTION_CHUNK_SIZE = 150
+ANALYSIS_BATCH_MAX = 100
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Helper Functions
@@ -517,7 +519,7 @@ async def _extract_ids_from_batch(
 
     try:
         response = await litellm.acompletion(
-            model="openai/gpt-4.1",
+            model="openai/gpt-4.1-mini",
             api_key=api_key,
             api_base=api_base,
             extra_headers={"x-cisco-app": "microservice-log-analyzer"},
@@ -873,7 +875,7 @@ def extract_id_fields_for_llm(hits: list[dict]) -> list[dict]:
 
 def _make_model() -> SessionLiteLlm:
     return SessionLiteLlm(
-        model="openai/gpt-4.1",
+        model="openai/gpt-4.1-mini",
         api_key="pending-oauth",
         api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
         extra_headers={"x-cisco-app": "microservice-log-analyzer"},
@@ -1107,13 +1109,20 @@ class ExhaustiveSearchAgent(BaseAgent):
         )
 
         if analysis_queue is not None:
-            await analysis_queue.put(condensed)
+            for i in range(0, len(condensed), ANALYSIS_BATCH_MAX):
+                chunk = condensed[i : i + ANALYSIS_BATCH_MAX]
+                await analysis_queue.put(chunk)
             logger.info(
                 f"[_process_hits_progressive] Pushed {len(condensed)} entries "
-                f"to analysis queue"
+                f"to analysis queue ({(len(condensed) - 1) // ANALYSIS_BATCH_MAX + 1} chunk(s))"
             )
 
-        extracted = await _extract_ids_from_batch(condensed, id_extractor_instruction)
+        extracted: dict = {}
+        for i in range(0, len(condensed), ID_EXTRACTION_CHUNK_SIZE):
+            chunk = condensed[i : i + ID_EXTRACTION_CHUNK_SIZE]
+            chunk_ids = await _extract_ids_from_batch(chunk, id_extractor_instruction)
+            for key, vals in chunk_ids.items():
+                extracted.setdefault(key, []).extend(vals)
         logger.info(
             f"[_process_hits_progressive] LLM results: "
             f"extracted_ids={json.dumps({k: len(v) for k, v in extracted.items() if v}, default=str)}"
